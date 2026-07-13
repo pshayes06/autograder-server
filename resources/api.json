@@ -1022,6 +1022,39 @@
                 }
             ]
         },
+        "courses/gradebook": {
+            "description": "Get gradebook (most recent score for each user on each assignment) for a course.",
+            "input": [
+                {
+                    "description": "The ID of the course to make this request to.",
+                    "name": "course-id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "target-users",
+                    "type": "[]model.CourseUserReference"
+                },
+                {
+                    "description": "The email of the user making this request.",
+                    "name": "user-email",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "description": "The password of the user making this request.",
+                    "name": "user-pass",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "output": [
+                {
+                    "name": "gradebook",
+                    "type": "map[string]map[string]*model.SubmissionHistoryItem"
+                }
+            ]
+        },
         "courses/list": {
             "description": "List the courses on the server.",
             "input": [
