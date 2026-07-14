@@ -1,7 +1,7 @@
 package courses
 
 import (
-	"maps"
+	"reflect"
 	"testing"
 
 	"github.com/edulinq/autograder/internal/api/core"
@@ -10,8 +10,7 @@ import (
 )
 
 func TestGradebook(test *testing.T) {
-
-	allUsers := map[string]map[string]string{
+	fullGradebook := map[string]map[string]string{
 		"hw0": {
 			"course-other@test.edulinq.org":   "",
 			"course-student@test.edulinq.org": "course101::hw0::course-student@test.edulinq.org::1697406272",
@@ -21,51 +20,147 @@ func TestGradebook(test *testing.T) {
 		},
 	}
 
+	studentOnlyGradebook := map[string]map[string]string{
+		"hw0": {
+			"course-student@test.edulinq.org": "course101::hw0::course-student@test.edulinq.org::1697406272",
+		},
+	}
+
 	testCases := []struct {
-		email       string
-		targetUsers []model.CourseUserReference
-		locator     string
-		expected    map[string]map[string]string
+		email             string
+		targetUsers       []model.CourseUserReference
+		targetAssignments []string
+		locator           string
+		expected          map[string]map[string]string
 	}{
 
 		// Valid Permissions
-		{"course-grader", nil, "", allUsers},
-		{"course-admin", []model.CourseUserReference{}, "", allUsers},
-		{"course-owner", []model.CourseUserReference{"*"}, "", allUsers},
+		{
+			"course-grader",
+			nil,
+			nil,
+			"",
+			fullGradebook,
+		},
+		{
+			"course-admin",
+			[]model.CourseUserReference{},
+			nil,
+			"",
+			fullGradebook,
+		},
+		{
+			"course-owner",
+			[]model.CourseUserReference{"*"},
+			nil,
+			"",
+			fullGradebook,
+		},
 
-		// Filtering
-		{"course-grader", []model.CourseUserReference{"student"}, "", map[string]map[string]string{
-			"hw0": {
-				"course-student@test.edulinq.org": "course101::hw0::course-student@test.edulinq.org::1697406272",
+		// User Filtering
+		{
+			"course-grader",
+			[]model.CourseUserReference{"student"},
+			nil,
+			"",
+			studentOnlyGradebook,
+		},
+		{
+			"course-admin",
+			[]model.CourseUserReference{"-*"}, nil,
+			"",
+			map[string]map[string]string{
+				"hw0": {},
 			},
-		}},
-		{"course-admin", []model.CourseUserReference{"-*"}, "", map[string]map[string]string{
-			"hw0": {},
-		}},
+		},
+
+		// Assignment Filtering
+		{
+			"course-grader",
+			nil,
+			[]string{"hw0"},
+			"",
+			fullGradebook,
+		},
+
+		// Assignment ID Validation Check
+		{
+			"course-grader",
+			nil,
+			[]string{"HW0"},
+			"",
+			fullGradebook,
+		},
 
 		// Valid Permissions, Role Escalation
-		{"server-admin", []model.CourseUserReference{"*"}, "", allUsers},
-		{"server-admin", []model.CourseUserReference{"student"}, "", map[string]map[string]string{
-			"hw0": {
-				"course-student@test.edulinq.org": "course101::hw0::course-student@test.edulinq.org::1697406272",
-			},
-		}},
+		{
+			"server-admin",
+			[]model.CourseUserReference{"*"},
+			nil,
+			"",
+			fullGradebook,
+		},
+		{
+			"server-admin",
+			[]model.CourseUserReference{"student"},
+			nil,
+			"",
+			studentOnlyGradebook,
+		},
 
 		// Invalid Permissions
-		{"course-student", []model.CourseUserReference{"*"}, "-020", nil},
-		{"course-other", []model.CourseUserReference{"*"}, "-020", nil},
+		{
+			"course-student",
+			[]model.CourseUserReference{"*"},
+			nil,
+			"-020",
+			nil,
+		},
+		{
+			"course-other",
+			[]model.CourseUserReference{"*"},
+			nil,
+			"-020",
+			nil,
+		},
 
 		// Invalid Permissions, Role Escalation
-		{"server-user", []model.CourseUserReference{"*"}, "-040", nil},
-		{"server-creator", []model.CourseUserReference{"*"}, "-040", nil},
+		{
+			"server-user",
+			[]model.CourseUserReference{"*"},
+			nil,
+			"-040",
+			nil,
+		},
+		{
+			"server-creator",
+			[]model.CourseUserReference{"*"},
+			nil,
+			"-040",
+			nil,
+		},
 
 		// Invalid Inputs
-		{"course-grader", []model.CourseUserReference{"ZZZ"}, "-644", nil},
+		{
+			"course-grader",
+			[]model.CourseUserReference{"ZZZ"},
+			nil,
+			"-644",
+			nil,
+		},
+		{
+			"course-admin",
+			nil,
+			[]string{"ZZZ"},
+			"-645",
+			nil,
+		},
 	}
 
 	for i, testCase := range testCases {
 		fields := map[string]any{
-			"target-users": testCase.targetUsers,
+			"target-users":       testCase.targetUsers,
+			"target-assignments": testCase.targetAssignments,
 		}
 
 		response := core.SendTestAPIRequestFull(test, `courses/gradebook`, fields, nil, testCase.email)
@@ -106,23 +201,9 @@ func TestGradebook(test *testing.T) {
 			actual[assignmentID] = ids
 		}
 
-		if len(actual) != len(testCase.expected) {
-			test.Errorf("Case %d: Unexpected number of assignments. Expected: %d, actual: %d.",
-				i, len(testCase.expected), len(actual))
-			continue
-		}
-
-		for assignmentID, expectedIDs := range testCase.expected {
-			actualIDs, ok := actual[assignmentID]
-			if !ok {
-				test.Errorf("Case %d: Missing assignment '%s'.", i, assignmentID)
-				continue
-			}
-
-			if !maps.Equal(expectedIDs, actualIDs) {
-				test.Errorf("Case %d: Submission IDs do not match for assignment '%s'. Expected: '%+v', actual: '%+v'.",
-					i, assignmentID, expectedIDs, actualIDs)
-			}
+		if !reflect.DeepEqual(testCase.expected, actual) {
+			test.Errorf("Case %d: Unexpected gradebook. Expected: '%s', actual: '%s'.",
+				i, util.MustToJSONIndent(testCase.expected), util.MustToJSONIndent(actual))
 		}
 	}
 }

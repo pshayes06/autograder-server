@@ -1032,6 +1032,10 @@
                     "type": "string"
                 },
                 {
+                    "name": "target-assignments",
+                    "type": "[]string"
+                },
+                {
                     "name": "target-users",
                     "type": "[]model.CourseUserReference"
                 },
