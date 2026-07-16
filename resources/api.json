@@ -1023,7 +1023,7 @@
             ]
         },
         "courses/gradebook": {
-            "description": "Get gradebook (most recent score for each user on each assignment) for a course.",
+            "description": "Get a gradebook (most recent score for each user on each assignment) for a course.",
             "input": [
                 {
                     "description": "The ID of the course to make this request to.",
@@ -1032,10 +1032,12 @@
                     "type": "string"
                 },
                 {
+                    "description": "If not empty, filter results to matching assignments.\nUnknown and malformed assignments will not raise an error",
                     "name": "target-assignments",
                     "type": "[]string"
                 },
                 {
+                    "description": "If not empty, filter results to matching users.\nUnknown users will not raise an error",
                     "name": "target-users",
                     "type": "[]model.CourseUserReference"
                 },

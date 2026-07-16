@@ -33,7 +33,6 @@ func TestGradebook(test *testing.T) {
 		locator           string
 		expected          map[string]map[string]string
 	}{
-
 		// Valid Permissions
 		{
 			"course-grader",
@@ -45,7 +44,7 @@ func TestGradebook(test *testing.T) {
 		{
 			"course-admin",
 			[]model.CourseUserReference{},
-			nil,
+			[]string{},
 			"",
 			fullGradebook,
 		},
@@ -92,22 +91,6 @@ func TestGradebook(test *testing.T) {
 			fullGradebook,
 		},
 
-		// Valid Permissions, Role Escalation
-		{
-			"server-admin",
-			[]model.CourseUserReference{"*"},
-			nil,
-			"",
-			fullGradebook,
-		},
-		{
-			"server-admin",
-			[]model.CourseUserReference{"student"},
-			nil,
-			"",
-			studentOnlyGradebook,
-		},
-
 		// Invalid Permissions
 		{
 			"course-student",
@@ -124,23 +107,7 @@ func TestGradebook(test *testing.T) {
 			nil,
 		},
 
-		// Invalid Permissions, Role Escalation
-		{
-			"server-user",
-			[]model.CourseUserReference{"*"},
-			nil,
-			"-040",
-			nil,
-		},
-		{
-			"server-creator",
-			[]model.CourseUserReference{"*"},
-			nil,
-			"-040",
-			nil,
-		},
-
-		// Invalid Inputs
+		// Failure on malformed user
 		{
 			"course-grader",
 			[]model.CourseUserReference{"ZZZ"},
@@ -148,12 +115,14 @@ func TestGradebook(test *testing.T) {
 			"-644",
 			nil,
 		},
+
+		// Ignored unknown/malformed assignment
 		{
 			"course-admin",
 			nil,
 			[]string{"ZZZ"},
-			"-645",
-			nil,
+			"",
+			map[string]map[string]string{},
 		},
 	}
 

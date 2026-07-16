@@ -1,8 +1,6 @@
 package courses
 
 import (
-	"fmt"
-
 	"github.com/edulinq/autograder/internal/api/core"
 	"github.com/edulinq/autograder/internal/db"
 	"github.com/edulinq/autograder/internal/model"
@@ -12,15 +10,20 @@ type GradebookRequest struct {
 	core.APIRequestCourseUserContext
 	core.MinCourseRoleGrader
 
-	TargetUsers       []model.CourseUserReference `json:"target-users"`
-	TargetAssignments []string                    `json:"target-assignments"`
+	// If not empty, filter results to matching users.
+	// Unknown users will not raise an error
+	TargetUsers []model.CourseUserReference `json:"target-users"`
+
+	// If not empty, filter results to matching assignments.
+	// Unknown and malformed assignments will not raise an error
+	TargetAssignments []string `json:"target-assignments"`
 }
 
 type GradebookResponse struct {
 	Gradebook map[string]map[string]*model.SubmissionHistoryItem `json:"gradebook"`
 }
 
-// Get gradebook (most recent score for each user on each assignment) for a course.
+// Get a gradebook (most recent score for each user on each assignment) for a course.
 func HandleGradebook(request *GradebookRequest) (*GradebookResponse, *core.APIError) {
 	if len(request.TargetUsers) == 0 {
 		request.TargetUsers = model.NewAllCourseUserReference()
@@ -41,14 +44,12 @@ func HandleGradebook(request *GradebookRequest) (*GradebookResponse, *core.APIEr
 	for _, id := range request.TargetAssignments {
 		assignment := request.Course.GetAssignment(id)
 		if assignment == nil {
-			return nil, core.NewBadRequestError("-645", request,
-				fmt.Sprintf("Could not find assignment: '%s'.", id))
-
+			continue
 		}
 
 		submissionInfos, err := db.GetRecentSubmissionSurvey(assignment, reference)
 		if err != nil {
-			return nil, core.NewInternalError("-646", request, "Failed to get submission summaries.").Err(err)
+			return nil, core.NewInternalError("-645", request, "Failed to get submission summaries.").Err(err)
 		}
 
 		gradebook[assignment.GetID()] = submissionInfos
