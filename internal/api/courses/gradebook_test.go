@@ -66,7 +66,8 @@ func TestGradebook(test *testing.T) {
 		},
 		{
 			"course-admin",
-			[]model.CourseUserReference{"-*"}, nil,
+			[]model.CourseUserReference{"-*"},
+			nil,
 			"",
 			map[string]map[string]string{
 				"hw0": {},
@@ -82,7 +83,7 @@ func TestGradebook(test *testing.T) {
 			fullGradebook,
 		},
 
-		// Assignment ID Validation Check
+		// Assignment ID Normalization Check
 		{
 			"course-grader",
 			nil,
@@ -107,7 +108,7 @@ func TestGradebook(test *testing.T) {
 			nil,
 		},
 
-		// Failure on malformed user
+		// Failure on malformed role
 		{
 			"course-grader",
 			[]model.CourseUserReference{"ZZZ"},
