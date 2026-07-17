@@ -33,7 +33,7 @@ func TestGradebook(test *testing.T) {
 		locator           string
 		expected          map[string]map[string]string
 	}{
-		// Valid Permissions
+		// Full Gradebook
 		{
 			"course-grader",
 			nil,
@@ -83,7 +83,7 @@ func TestGradebook(test *testing.T) {
 			fullGradebook,
 		},
 
-		// Assignment ID Normalization Check
+		// Assignment ID Normalization
 		{
 			"course-grader",
 			nil,
@@ -108,7 +108,7 @@ func TestGradebook(test *testing.T) {
 			nil,
 		},
 
-		// Failure on malformed role
+		// Invalid User (error)
 		{
 			"course-grader",
 			[]model.CourseUserReference{"ZZZ"},
@@ -117,7 +117,7 @@ func TestGradebook(test *testing.T) {
 			nil,
 		},
 
-		// Ignored unknown/malformed assignment
+		// Unknown Assignment (ignored)
 		{
 			"course-admin",
 			nil,

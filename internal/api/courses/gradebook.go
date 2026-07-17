@@ -10,12 +10,14 @@ type GradebookRequest struct {
 	core.APIRequestCourseUserContext
 	core.MinCourseRoleGrader
 
-	// If not empty, filter results to matching users.
-	// Unknown users will not raise an error.
+	// The users to include in the gradebook.
+	// If nothing is specified, all course users will be included.
+	// Unknown users are ignored and will not raise an error.
 	TargetUsers []model.CourseUserReference `json:"target-users"`
 
-	// If not empty, filter results to matching assignments.
-	// Unknown and malformed assignments will not raise an error.
+	// The assignments to include in the gradebook.
+	// If nothing is specified, all course assignments will be included.
+	// Unknown and malformed assignments are ignored and will not raise an error.
 	TargetAssignments []string `json:"target-assignments"`
 }
 

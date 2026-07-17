@@ -1032,12 +1032,12 @@
                     "type": "string"
                 },
                 {
-                    "description": "If not empty, filter results to matching assignments.\nUnknown and malformed assignments will not raise an error.",
+                    "description": "The assignments to include in the gradebook.\nIf nothing is specified, all course assignments will be included.\nUnknown and malformed assignments are ignored and will not raise an error.",
                     "name": "target-assignments",
                     "type": "[]string"
                 },
                 {
-                    "description": "If not empty, filter results to matching users.\nUnknown users will not raise an error.",
+                    "description": "The users to include in the gradebook.\nIf nothing is specified, all course users will be included.\nUnknown users are ignored and will not raise an error.",
                     "name": "target-users",
                     "type": "[]model.CourseUserReference"
                 },
