@@ -37,7 +37,7 @@ func HandleGradebook(request *GradebookRequest) (*GradebookResponse, *core.APIEr
 	}
 
 	if len(request.TargetAssignments) == 0 {
-		for id := range request.Course.GetAssignments() {
+		for id, _ := range request.Course.GetAssignments() {
 			request.TargetAssignments = append(request.TargetAssignments, id)
 		}
 	}
