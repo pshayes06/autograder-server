@@ -1,4 +1,4 @@
-package courses
+package gradebook
 
 import (
 	"github.com/edulinq/autograder/internal/api/core"
@@ -6,7 +6,7 @@ import (
 	"github.com/edulinq/autograder/internal/model"
 )
 
-type GradebookRequest struct {
+type FetchRequest struct {
 	core.APIRequestCourseUserContext
 	core.MinCourseRoleGrader
 
@@ -21,12 +21,12 @@ type GradebookRequest struct {
 	TargetAssignments []string `json:"target-assignments"`
 }
 
-type GradebookResponse struct {
+type FetchResponse struct {
 	Gradebook map[string]map[string]*model.SubmissionHistoryItem `json:"gradebook"`
 }
 
 // Get a gradebook (most recent score for each user on each assignment) for a course.
-func HandleGradebook(request *GradebookRequest) (*GradebookResponse, *core.APIError) {
+func HandleFetch(request *FetchRequest) (*FetchResponse, *core.APIError) {
 	if len(request.TargetUsers) == 0 {
 		request.TargetUsers = model.NewAllCourseUserReference()
 	}
@@ -57,5 +57,5 @@ func HandleGradebook(request *GradebookRequest) (*GradebookResponse, *core.APIEr
 		gradebook[assignment.GetID()] = submissionInfos
 	}
 
-	return &GradebookResponse{gradebook}, nil
+	return &FetchResponse{gradebook}, nil
 }

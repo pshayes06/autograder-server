@@ -1022,7 +1022,7 @@
                 }
             ]
         },
-        "courses/gradebook": {
+        "courses/gradebook/fetch": {
             "description": "Get a gradebook (most recent score for each user on each assignment) for a course.",
             "input": [
                 {

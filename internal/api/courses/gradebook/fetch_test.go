@@ -1,4 +1,4 @@
-package courses
+package gradebook
 
 import (
 	"reflect"
@@ -30,7 +30,7 @@ func flattenGradebook(gradebook map[string]map[string]*model.SubmissionHistoryIt
 	return flattened
 }
 
-func TestGradebook(test *testing.T) {
+func TestFetch(test *testing.T) {
 	db.ResetForTesting()
 	defer db.ResetForTesting()
 
@@ -54,7 +54,8 @@ func TestGradebook(test *testing.T) {
 
 	for _, submission := range testSubmissions {
 		assignment := db.MustGetAssignment(submission.Info.CourseID, submission.Info.AssignmentID)
-		if err := db.SaveSubmission(assignment, submission); err != nil {
+		err := db.SaveSubmission(assignment, submission)
+		if err != nil {
 			test.Fatalf("Failed to insert test submission: '%v'.", err)
 		}
 	}
@@ -219,7 +220,7 @@ func TestGradebook(test *testing.T) {
 			"target-assignments": testCase.targetAssignments,
 		}
 
-		response := core.SendTestAPIRequestFull(test, `courses/gradebook`, fields, nil, testCase.email)
+		response := core.SendTestAPIRequestFull(test, `courses/gradebook/fetch`, fields, nil, testCase.email)
 		if !response.Success {
 			if testCase.locator != "" {
 				if response.Locator != testCase.locator {
@@ -238,13 +239,13 @@ func TestGradebook(test *testing.T) {
 			continue
 		}
 
-		var responseContent GradebookResponse
+		var responseContent FetchResponse
 		util.MustJSONFromString(util.MustToJSON(response.Content), &responseContent)
 
 		actual := flattenGradebook(responseContent.Gradebook)
 
 		if !reflect.DeepEqual(testCase.expected, actual) {
-			test.Errorf("Case %d: Unexpected gradebook. Expected: '%s', actual: '%s'.",
+			test.Errorf("Case %d: Unexpected gradebook. Expected: '%s', Actual: '%s'.",
 				i, util.MustToJSONIndent(testCase.expected), util.MustToJSONIndent(actual))
 		}
 	}
