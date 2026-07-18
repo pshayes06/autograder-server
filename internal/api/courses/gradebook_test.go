@@ -10,13 +10,10 @@ import (
 	"github.com/edulinq/autograder/internal/util"
 )
 
-// Flatten a gradebook response into submission IDs rather than comparing whole structs.
-func flattenGradebook(content any) map[string]map[string]string {
-	var responseContent GradebookResponse
-	util.MustJSONFromString(util.MustToJSON(content), &responseContent)
-
-	actual := make(map[string]map[string]string, len(responseContent.Gradebook))
-	for assignmentID, submissionInfos := range responseContent.Gradebook {
+// Flatten a gradebook into submission IDs rather than comparing whole structs.
+func flattenGradebook(gradebook map[string]map[string]*model.SubmissionHistoryItem) map[string]map[string]string {
+	flattened := make(map[string]map[string]string, len(gradebook))
+	for assignmentID, submissionInfos := range gradebook {
 		ids := make(map[string]string, len(submissionInfos))
 		for email, info := range submissionInfos {
 			id := ""
@@ -27,26 +24,74 @@ func flattenGradebook(content any) map[string]map[string]string {
 			ids[email] = id
 		}
 
-		actual[assignmentID] = ids
+		flattened[assignmentID] = ids
 	}
 
-	return actual
+	return flattened
 }
 
 func TestGradebook(test *testing.T) {
+	db.ResetForTesting()
+	defer db.ResetForTesting()
+
+	// Additional submissions to insert into course-languages for testing.
+	testSubmissions := []*model.GradingResult{
+		{Info: &model.GradingInfo{
+			ID:           "course-languages::bash::course-grader@test.edulinq.org::1234567890",
+			ShortID:      "1234567890",
+			CourseID:     "course-languages",
+			AssignmentID: "bash",
+			User:         "course-grader@test.edulinq.org",
+		}},
+		{Info: &model.GradingInfo{
+			ID:           "course-languages::cpp::course-student@test.edulinq.org::1234567890",
+			ShortID:      "1234567890",
+			CourseID:     "course-languages",
+			AssignmentID: "cpp",
+			User:         "course-student@test.edulinq.org",
+		}},
+	}
+
+	for _, submission := range testSubmissions {
+		assignment := db.MustGetAssignment(submission.Info.CourseID, submission.Info.AssignmentID)
+		if err := db.SaveSubmission(assignment, submission); err != nil {
+			test.Fatalf("Failed to insert test submission: '%v'.", err)
+		}
+	}
+
 	fullGradebook := map[string]map[string]string{
-		"hw0": {
+		"bash": {
+			"course-student@test.edulinq.org": "course-languages::bash::course-student@test.edulinq.org::1768603685",
+			"course-grader@test.edulinq.org":  "course-languages::bash::course-grader@test.edulinq.org::1234567890",
 			"course-other@test.edulinq.org":   "",
-			"course-student@test.edulinq.org": "course101::hw0::course-student@test.edulinq.org::1697406272",
+			"course-admin@test.edulinq.org":   "",
+			"course-owner@test.edulinq.org":   "",
+		},
+		"cpp": {
+			"course-student@test.edulinq.org": "course-languages::cpp::course-student@test.edulinq.org::1234567890",
 			"course-grader@test.edulinq.org":  "",
+			"course-other@test.edulinq.org":   "",
+			"course-admin@test.edulinq.org":   "",
+			"course-owner@test.edulinq.org":   "",
+		},
+		"java": {
+			"course-student@test.edulinq.org": "",
+			"course-grader@test.edulinq.org":  "",
+			"course-other@test.edulinq.org":   "",
 			"course-admin@test.edulinq.org":   "",
 			"course-owner@test.edulinq.org":   "",
 		},
 	}
 
 	studentOnlyGradebook := map[string]map[string]string{
-		"hw0": {
-			"course-student@test.edulinq.org": "course101::hw0::course-student@test.edulinq.org::1697406272",
+		"bash": {
+			"course-student@test.edulinq.org": "course-languages::bash::course-student@test.edulinq.org::1768603685",
+		},
+		"cpp": {
+			"course-student@test.edulinq.org": "course-languages::cpp::course-student@test.edulinq.org::1234567890",
+		},
+		"java": {
+			"course-student@test.edulinq.org": "",
 		},
 	}
 
@@ -94,7 +139,30 @@ func TestGradebook(test *testing.T) {
 			nil,
 			"",
 			map[string]map[string]string{
-				"hw0": {},
+				"bash": {},
+				"cpp":  {},
+				"java": {},
+			},
+		},
+
+		// Assignment Filtering
+		{
+			"course-grader",
+			nil,
+			[]string{"bash"},
+			"",
+			map[string]map[string]string{
+				"bash": fullGradebook["bash"],
+			},
+		},
+		{
+			"course-grader",
+			nil,
+			[]string{"bash", "cpp"},
+			"",
+			map[string]map[string]string{
+				"bash": fullGradebook["bash"],
+				"cpp":  fullGradebook["cpp"],
 			},
 		},
 
@@ -102,9 +170,11 @@ func TestGradebook(test *testing.T) {
 		{
 			"course-grader",
 			nil,
-			[]string{"HW0"},
+			[]string{"JaVA"},
 			"",
-			fullGradebook,
+			map[string]map[string]string{
+				"java": fullGradebook["java"],
+			},
 		},
 
 		// Invalid Permissions
@@ -144,6 +214,7 @@ func TestGradebook(test *testing.T) {
 
 	for i, testCase := range testCases {
 		fields := map[string]any{
+			"course-id":          "course-languages",
 			"target-users":       testCase.targetUsers,
 			"target-assignments": testCase.targetAssignments,
 		}
@@ -167,106 +238,10 @@ func TestGradebook(test *testing.T) {
 			continue
 		}
 
-		actual := flattenGradebook(response.Content)
+		var responseContent GradebookResponse
+		util.MustJSONFromString(util.MustToJSON(response.Content), &responseContent)
 
-		if !reflect.DeepEqual(testCase.expected, actual) {
-			test.Errorf("Case %d: Unexpected gradebook. Expected: '%s', actual: '%s'.",
-				i, util.MustToJSONIndent(testCase.expected), util.MustToJSONIndent(actual))
-		}
-	}
-}
-
-func TestGradebookAssignmentFiltering(test *testing.T) {
-	db.ResetForTesting()
-	defer db.ResetForTesting()
-
-	testSubmissions := []*model.GradingResult{
-		{Info: &model.GradingInfo{
-			ID:           "course-languages::bash::course-grader@test.edulinq.org::1234567890",
-			ShortID:      "1234567890",
-			CourseID:     "course-languages",
-			AssignmentID: "bash",
-			User:         "course-grader@test.edulinq.org",
-		}},
-		{Info: &model.GradingInfo{
-			ID:           "course-languages::cpp::course-student@test.edulinq.org::1234567890",
-			ShortID:      "1234567890",
-			CourseID:     "course-languages",
-			AssignmentID: "cpp",
-			User:         "course-student@test.edulinq.org",
-		}},
-	}
-
-	for _, submission := range testSubmissions {
-		assignment := db.MustGetAssignment(submission.Info.CourseID, submission.Info.AssignmentID)
-		if err := db.SaveSubmission(assignment, submission); err != nil {
-			test.Fatalf("Failed to insert test submission: '%v'.", err)
-		}
-	}
-
-	fullLanguagesGradebook := map[string]map[string]string{
-		"bash": {
-			"course-student@test.edulinq.org": "course-languages::bash::course-student@test.edulinq.org::1768603685",
-			"course-grader@test.edulinq.org":  "course-languages::bash::course-grader@test.edulinq.org::1234567890",
-			"course-other@test.edulinq.org":   "",
-			"course-admin@test.edulinq.org":   "",
-			"course-owner@test.edulinq.org":   "",
-		},
-		"cpp": {
-			"course-student@test.edulinq.org": "course-languages::cpp::course-student@test.edulinq.org::1234567890",
-			"course-grader@test.edulinq.org":  "",
-			"course-other@test.edulinq.org":   "",
-			"course-admin@test.edulinq.org":   "",
-			"course-owner@test.edulinq.org":   "",
-		},
-		"java": {
-			"course-student@test.edulinq.org": "",
-			"course-grader@test.edulinq.org":  "",
-			"course-other@test.edulinq.org":   "",
-			"course-admin@test.edulinq.org":   "",
-			"course-owner@test.edulinq.org":   "",
-		},
-	}
-
-	testCases := []struct {
-		targetAssignments []string
-		expected          map[string]map[string]string
-	}{
-		// All Assignments
-		{
-			nil,
-			fullLanguagesGradebook,
-		},
-
-		// Select Assignments
-		{
-			[]string{"bash"},
-			map[string]map[string]string{
-				"bash": fullLanguagesGradebook["bash"],
-			},
-		},
-		{
-			[]string{"bash", "cpp"},
-			map[string]map[string]string{
-				"bash": fullLanguagesGradebook["bash"],
-				"cpp":  fullLanguagesGradebook["cpp"],
-			},
-		},
-	}
-
-	for i, testCase := range testCases {
-		fields := map[string]any{
-			"course-id":          "course-languages",
-			"target-assignments": testCase.targetAssignments,
-		}
-
-		response := core.SendTestAPIRequestFull(test, `courses/gradebook`, fields, nil, "course-grader")
-		if !response.Success {
-			test.Errorf("Case %d: Response is not a success when it should be: '%v'.", i, response)
-			continue
-		}
-
-		actual := flattenGradebook(response.Content)
+		actual := flattenGradebook(responseContent.Gradebook)
 
 		if !reflect.DeepEqual(testCase.expected, actual) {
 			test.Errorf("Case %d: Unexpected gradebook. Expected: '%s', actual: '%s'.",
