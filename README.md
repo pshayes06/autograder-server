@@ -1,4 +1,4 @@
-# Autograder Server
+# Lynx Grader - Server
 
 [![Build Status](https://github.com/edulinq/autograder-server/actions/workflows/main.yml/badge.svg)](https://github.com/edulinq/autograder-server/actions/workflows/main.yml)
 
