@@ -2,9 +2,11 @@ package model
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/edulinq/autograder/internal/log"
+	"github.com/edulinq/autograder/internal/timestamp"
 	"github.com/edulinq/autograder/internal/util"
 )
 
@@ -14,18 +16,20 @@ var COURSE_USER_ROW_COLUMNS []string = []string{"email", "name", "role", "lms-id
 // They only contain a users information that is relevant to the course.
 // Pointer fields indicate optional fields.
 type CourseUser struct {
-	Email string         `json:"email"`
-	Name  *string        `json:"name"`
-	Role  CourseUserRole `json:"role"`
-	LMSID *string        `json:"lms-id"`
+	Email            string                         `json:"email"`
+	Name             *string                        `json:"name"`
+	Role             CourseUserRole                 `json:"role"`
+	LMSID            *string                        `json:"lms-id"`
+	DueDateOverrides map[string]timestamp.Timestamp `json:"due-date-overrides,omitempty"`
 }
 
-func NewCourseUser(email string, name *string, role CourseUserRole, lmsID *string) (*CourseUser, error) {
+func NewCourseUser(email string, name *string, role CourseUserRole, lmsID *string, dueDateOverrides map[string]timestamp.Timestamp) (*CourseUser, error) {
 	courseUser := &CourseUser{
-		Email: email,
-		Name:  name,
-		Role:  role,
-		LMSID: lmsID,
+		Email:            email,
+		Name:             name,
+		Role:             role,
+		LMSID:            lmsID,
+		DueDateOverrides: dueDateOverrides,
 	}
 
 	return courseUser, courseUser.Validate()
@@ -92,7 +96,7 @@ func (this *CourseUser) ToServerUser(courseID string) (*ServerUser, error) {
 	serverUser := &ServerUser{
 		Email:      this.Email,
 		Name:       this.Name,
-		CourseInfo: map[string]*UserCourseInfo{courseID: &UserCourseInfo{Role: this.Role, LMSID: this.LMSID}},
+		CourseInfo: map[string]*UserCourseInfo{courseID: &UserCourseInfo{Role: this.Role, LMSID: this.LMSID, DueDateOverrides: maps.Clone(this.DueDateOverrides)}},
 	}
 
 	return serverUser, serverUser.validate(false)

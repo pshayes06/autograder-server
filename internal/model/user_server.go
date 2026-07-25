@@ -4,11 +4,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
 	"github.com/edulinq/autograder/internal/common"
 	"github.com/edulinq/autograder/internal/log"
+	"github.com/edulinq/autograder/internal/timestamp"
 	"github.com/edulinq/autograder/internal/util"
 )
 
@@ -44,8 +46,9 @@ type ServerUser struct {
 var RootUserEmail = "root"
 
 type UserCourseInfo struct {
-	Role  CourseUserRole `json:"role"`
-	LMSID *string        `json:"lms-id"`
+	Role             CourseUserRole                 `json:"role"`
+	LMSID            *string                        `json:"lms-id"`
+	DueDateOverrides map[string]timestamp.Timestamp `json:"due-date-overrides,omitempty"`
 }
 
 func (this *ServerUser) Validate() error {
@@ -197,6 +200,7 @@ func (this *ServerUser) ToCourseUser(courseID string, escalateServerAdmin bool) 
 	if enrolled {
 		courseUser.Role = info.Role
 		courseUser.LMSID = info.LMSID
+		courseUser.DueDateOverrides = maps.Clone(info.DueDateOverrides)
 	}
 
 	if escalate {
@@ -476,13 +480,29 @@ func (this *UserCourseInfo) Merge(other *UserCourseInfo) bool {
 		changed = true
 	}
 
+	for assignmentId, dueDate := range other.DueDateOverrides {
+		existingDate, exists := this.DueDateOverrides[assignmentId]
+
+		if exists && (existingDate == dueDate) {
+			continue
+		}
+
+		if this.DueDateOverrides == nil {
+			this.DueDateOverrides = make(map[string]timestamp.Timestamp)
+		}
+
+		this.DueDateOverrides[assignmentId] = dueDate
+		changed = true
+	}
+
 	return changed
 }
 
 func (this *UserCourseInfo) Clone() *UserCourseInfo {
 	return &UserCourseInfo{
-		Role:  this.Role,
-		LMSID: this.LMSID,
+		Role:             this.Role,
+		LMSID:            this.LMSID,
+		DueDateOverrides: maps.Clone(this.DueDateOverrides),
 	}
 }
 
