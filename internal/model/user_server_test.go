@@ -571,8 +571,8 @@ func TestUserServerUserToCourseUser(test *testing.T) {
 		{
 			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{
-					Role: CourseRoleStudent,
-					LMSID: util.StringPointer("alice"),
+					Role:             CourseRoleStudent,
+					LMSID:            util.StringPointer("alice"),
 					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
 				},
 			}),
@@ -819,16 +819,16 @@ func TestUserServerUserMerge(test *testing.T) {
 			baseTestServerUser,
 			setServerUserCourseInfo(minimalTestServerUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{
-					Role: CourseRoleStudent,
-					LMSID: util.StringPointer("alice"),
+					Role:             CourseRoleStudent,
+					LMSID:            util.StringPointer("alice"),
 					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
 				},
 			}),
 			true,
 			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{
-					Role: CourseRoleStudent,
-					LMSID: util.StringPointer("alice"),
+					Role:             CourseRoleStudent,
+					LMSID:            util.StringPointer("alice"),
 					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
 				},
 			}),
@@ -837,7 +837,7 @@ func TestUserServerUserMerge(test *testing.T) {
 			// Only overwrite Role, preserving DueDateOverrides
 			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{
-					Role: CourseRoleStudent,
+					Role:             CourseRoleStudent,
 					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
 				},
 			}),
@@ -847,7 +847,7 @@ func TestUserServerUserMerge(test *testing.T) {
 			true,
 			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{
-					Role: CourseRoleGrader,
+					Role:             CourseRoleGrader,
 					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
 				},
 			}),
@@ -856,7 +856,7 @@ func TestUserServerUserMerge(test *testing.T) {
 			// Overwriting existing DueDateOverrides
 			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{
-					Role: CourseRoleStudent,
+					Role:             CourseRoleStudent,
 					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.FromMSecs(100)},
 				},
 			}),
@@ -866,7 +866,7 @@ func TestUserServerUserMerge(test *testing.T) {
 			true,
 			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{
-					Role: CourseRoleStudent,
+					Role:             CourseRoleStudent,
 					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
 				},
 			}),

@@ -510,8 +510,8 @@ func (this *UserCourseInfo) Merge(other *UserCourseInfo) bool {
 
 func (this *UserCourseInfo) Clone() *UserCourseInfo {
 	return &UserCourseInfo{
-		Role:             this.Role,
-		LMSID:            this.LMSID,
+		Role:  this.Role,
+		LMSID: this.LMSID,
 		// Creates deep copy since DueDateOverrides values aren't references
 		DueDateOverrides: maps.Clone(this.DueDateOverrides),
 	}

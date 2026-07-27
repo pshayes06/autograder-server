@@ -210,8 +210,8 @@ func TestUserCourseUserToServerUser(test *testing.T) {
 			setCourseUserDueDateOverrides(baseTestCourseUser, map[string]timestamp.Timestamp{"hw0": timestamp.Zero()}),
 			setServerUserCourseInfo(minConversionCourseUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{
-					Role: CourseRoleStudent,
-					LMSID: util.StringPointer("alice"),
+					Role:             CourseRoleStudent,
+					LMSID:            util.StringPointer("alice"),
 					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
 				},
 			}),
