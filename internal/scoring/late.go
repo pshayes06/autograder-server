@@ -83,14 +83,20 @@ func ApplyLatePolicy(assignment *model.Assignment, users map[string]*model.Cours
 // Apply a common policy.
 func applyBaselinePolicy(assignment *model.Assignment, policy *model.LateGradingPolicy, users map[string]*model.CourseUser, scores map[string]*model.ScoringInfo, dueDate timestamp.Timestamp) {
 	for email, score := range scores {
-		score.NumDaysLate = computeLateDays(dueDate, score.SubmissionTime, policy.GraceMinutes)
-
-		_, ok := users[email]
+		courseUser, ok := users[email]
 		if !ok {
 			log.Warn("Cannot find user, rejecting submission and skipping application of late polict.", assignment, log.NewUserAttr(email))
 			score.Reject = true
 			continue
 		}
+
+		dueDateCopy := dueDate
+		override, ok := courseUser.GetDueDateOverride(assignment.ID)
+		if ok {
+			dueDateCopy = override
+		}
+
+		score.NumDaysLate = computeLateDays(dueDateCopy, score.SubmissionTime, policy.GraceMinutes)
 
 		if (policy.RejectAfterDays > 0) && (score.NumDaysLate > policy.RejectAfterDays) {
 			score.Reject = true

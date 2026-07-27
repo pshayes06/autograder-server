@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/edulinq/autograder/internal/timestamp"
 	"github.com/edulinq/autograder/internal/util"
 )
 
@@ -566,6 +567,20 @@ func TestUserServerUserToCourseUser(test *testing.T) {
 			false,
 		},
 
+		// With DueDateOverrides
+		{
+			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{
+					Role: CourseRoleStudent,
+					LMSID: util.StringPointer("alice"),
+					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
+				},
+			}),
+			setCourseUserDueDateOverrides(baseTestCourseUser, map[string]timestamp.Timestamp{"hw0": timestamp.Zero()}),
+			"course101",
+			false,
+		},
+
 		// Validation Error
 		{
 			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{"course101": &UserCourseInfo{Role: CourseRoleUnknown}}),
@@ -795,6 +810,65 @@ func TestUserServerUserMerge(test *testing.T) {
 			true,
 			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
 				"course101": &UserCourseInfo{Role: CourseRoleStudent, LMSID: util.StringPointer("foo")},
+			}),
+		},
+
+		// Due Date Overrides
+		{
+			// Adding new DueDateOverrides
+			baseTestServerUser,
+			setServerUserCourseInfo(minimalTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{
+					Role: CourseRoleStudent,
+					LMSID: util.StringPointer("alice"),
+					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
+				},
+			}),
+			true,
+			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{
+					Role: CourseRoleStudent,
+					LMSID: util.StringPointer("alice"),
+					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
+				},
+			}),
+		},
+		{
+			// Only overwrite Role, preserving DueDateOverrides
+			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{
+					Role: CourseRoleStudent,
+					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
+				},
+			}),
+			setServerUserCourseInfo(minimalTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{Role: CourseRoleGrader},
+			}),
+			true,
+			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{
+					Role: CourseRoleGrader,
+					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
+				},
+			}),
+		},
+		{
+			// Overwriting existing DueDateOverrides
+			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{
+					Role: CourseRoleStudent,
+					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.FromMSecs(100)},
+				},
+			}),
+			setServerUserCourseInfo(minimalTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()}},
+			}),
+			true,
+			setServerUserCourseInfo(baseTestServerUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{
+					Role: CourseRoleStudent,
+					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
+				},
 			}),
 		},
 	}

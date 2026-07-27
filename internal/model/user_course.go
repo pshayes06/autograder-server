@@ -16,10 +16,11 @@ var COURSE_USER_ROW_COLUMNS []string = []string{"email", "name", "role", "lms-id
 // They only contain a users information that is relevant to the course.
 // Pointer fields indicate optional fields.
 type CourseUser struct {
-	Email            string                         `json:"email"`
-	Name             *string                        `json:"name"`
-	Role             CourseUserRole                 `json:"role"`
-	LMSID            *string                        `json:"lms-id"`
+	Email string         `json:"email"`
+	Name  *string        `json:"name"`
+	Role  CourseUserRole `json:"role"`
+	LMSID *string        `json:"lms-id"`
+	// Per-assignment due date overrides, keyed by assignment id.
 	DueDateOverrides map[string]timestamp.Timestamp `json:"due-date-overrides,omitempty"`
 }
 
@@ -87,6 +88,15 @@ func (this *CourseUser) GetLMSID() string {
 	}
 
 	return *this.LMSID
+}
+
+func (this *CourseUser) GetDueDateOverride(assignmentID string) (timestamp.Timestamp, bool) {
+	if this == nil {
+		return 0, false
+	}
+
+	override, ok := this.DueDateOverrides[assignmentID]
+	return override, ok
 }
 
 // Note that this function is potentially dangerous because

@@ -46,8 +46,9 @@ type ServerUser struct {
 var RootUserEmail = "root"
 
 type UserCourseInfo struct {
-	Role             CourseUserRole                 `json:"role"`
-	LMSID            *string                        `json:"lms-id"`
+	Role  CourseUserRole `json:"role"`
+	LMSID *string        `json:"lms-id"`
+	// Per-assignment due date overrides, keyed by assignment id.
 	DueDateOverrides map[string]timestamp.Timestamp `json:"due-date-overrides,omitempty"`
 }
 
@@ -443,6 +444,15 @@ func (this *UserCourseInfo) GetLMSID() string {
 	return *this.LMSID
 }
 
+func (this *UserCourseInfo) GetDueDateOverride(assignmentID string) (timestamp.Timestamp, bool) {
+	if this == nil {
+		return 0, false
+	}
+
+	override, ok := this.DueDateOverrides[assignmentID]
+	return override, ok
+}
+
 func (this *UserCourseInfo) Validate() error {
 	if this.Role == CourseRoleUnknown {
 		return fmt.Errorf("Unknown course role.")
@@ -502,6 +512,7 @@ func (this *UserCourseInfo) Clone() *UserCourseInfo {
 	return &UserCourseInfo{
 		Role:             this.Role,
 		LMSID:            this.LMSID,
+		// Creates deep copy since DueDateOverrides values aren't references
 		DueDateOverrides: maps.Clone(this.DueDateOverrides),
 	}
 }

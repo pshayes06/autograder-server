@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/edulinq/autograder/internal/timestamp"
 	"github.com/edulinq/autograder/internal/util"
 )
 
@@ -204,6 +205,20 @@ func TestUserCourseUserToServerUser(test *testing.T) {
 			false,
 		},
 
+		// Include DueDateOverrides
+		{
+			setCourseUserDueDateOverrides(baseTestCourseUser, map[string]timestamp.Timestamp{"hw0": timestamp.Zero()}),
+			setServerUserCourseInfo(minConversionCourseUser, map[string]*UserCourseInfo{
+				"course101": &UserCourseInfo{
+					Role: CourseRoleStudent,
+					LMSID: util.StringPointer("alice"),
+					DueDateOverrides: map[string]timestamp.Timestamp{"hw0": timestamp.Zero()},
+				},
+			}),
+			"course101",
+			false,
+		},
+
 		// Validation Error
 		{
 			setCourseCourseUserRole(baseTestCourseUser, CourseRoleUnknown),
@@ -351,6 +366,12 @@ func setCourseCourseUserRole(user *CourseUser, role CourseUserRole) *CourseUser 
 func setCourseUserLMSID(user *CourseUser, lmsID *string) *CourseUser {
 	newUser := *user
 	newUser.LMSID = lmsID
+	return &newUser
+}
+
+func setCourseUserDueDateOverrides(user *CourseUser, dueDateOverrides map[string]timestamp.Timestamp) *CourseUser {
+	newUser := *user
+	newUser.DueDateOverrides = dueDateOverrides
 	return &newUser
 }
 

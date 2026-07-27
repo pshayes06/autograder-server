@@ -76,7 +76,7 @@ func checkForRejection(assignment *model.Assignment, submissionPath string, emai
 		return nil, nil
 	}
 
-	reason := checkLateSubmission(assignment, allowLate)
+	reason := checkLateSubmission(assignment, allowLate, user)
 	if reason != nil {
 		return reason, nil
 	}
@@ -84,15 +84,24 @@ func checkForRejection(assignment *model.Assignment, submissionPath string, emai
 	return checkSubmissionLimit(assignment, email)
 }
 
-func checkLateSubmission(assignment *model.Assignment, allowLate bool) RejectReason {
-	if assignment.DueDate == nil {
+func checkLateSubmission(assignment *model.Assignment, allowLate bool, user *model.ServerUser) RejectReason {
+	dueDate := assignment.DueDate
+
+	if dueDate == nil {
 		return nil
+	}
+
+	courseID := assignment.GetCourse().GetID()
+
+	override, ok := user.CourseInfo[courseID].GetDueDateOverride(assignment.ID)
+	if ok {
+		dueDate = &override
 	}
 
 	now := timestamp.Now()
 
-	if (now > *assignment.DueDate) && !allowLate {
-		return &RejectLate{assignment.Name, *assignment.DueDate}
+	if (now > *dueDate) && !allowLate {
+		return &RejectLate{assignment.Name, *dueDate}
 	}
 
 	return nil

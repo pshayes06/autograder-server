@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/edulinq/autograder/internal/common"
+	"github.com/edulinq/autograder/internal/model"
 	"github.com/edulinq/autograder/internal/timestamp"
 	"github.com/edulinq/autograder/internal/util"
 )
@@ -99,6 +100,41 @@ func TestComputeLateDaysWithGraceTime(test *testing.T) {
 		actual := computeLateDays(testCase.dueDate, testCase.submissionTime, testCase.graceMinutes)
 		if testCase.expected != actual {
 			test.Errorf("Case %d: Bad late days with grace time. Expected: %d, Actual: %d.", i, testCase.expected, actual)
+		}
+	}
+}
+
+func TestApplyBaselinePolicyOverride(test *testing.T) {
+	submitTime := timestamp.FromMSecs(100)
+	yesterday := submitTime - timestamp.FromMSecs(1*24*60*60*1000)
+	tomorrow := submitTime + timestamp.FromMSecs(1*24*60*60*1000)
+
+	assignment := &model.Assignment{ID: "hw0"}
+
+	testCases := []struct {
+		overrides        map[string]timestamp.Timestamp
+		expectedDaysLate int
+	}{
+		// Change due date to tomorrow means on time
+		{map[string]timestamp.Timestamp{"hw0": tomorrow}, 0},
+
+		// Due date is kept to yesterday means a day late
+		{nil, 1},
+	}
+
+	for i, testCase := range testCases {
+		users := map[string]*model.CourseUser{
+			"alice@test.edulinq.org": {DueDateOverrides: testCase.overrides},
+		}
+		scores := map[string]*model.ScoringInfo{
+			"alice@test.edulinq.org": {SubmissionTime: submitTime},
+		}
+
+		applyBaselinePolicy(assignment, &model.LateGradingPolicy{}, users, scores, yesterday)
+
+		actual := scores["alice@test.edulinq.org"].NumDaysLate
+		if actual != testCase.expectedDaysLate {
+			test.Errorf("Case %d: NumDaysLate = %d, expected %d.", i, actual, testCase.expectedDaysLate)
 		}
 	}
 }

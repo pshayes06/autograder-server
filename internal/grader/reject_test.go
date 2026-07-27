@@ -120,6 +120,28 @@ func TestRejectLateSubmissionWithoutAllow(test *testing.T) {
 	submitForRejection(test, assignment, "course-other@test.edulinq.org", false, &RejectLate{assignment.Name, *assignment.DueDate})
 }
 
+func TestRejectLateSubmissionWithoutAllowOverridden(test *testing.T) {
+	db.ResetForTesting()
+	defer db.ResetForTesting()
+
+	assignment := db.MustGetTestSubmissionAssignment()
+
+	// Set a dummy submission limit.
+	assignment.SubmissionLimit = &model.SubmissionLimitInfo{}
+
+	// Set the due date to be the Unix epoch.
+	dueDate := timestamp.Zero()
+	assignment.DueDate = &dueDate
+
+	user := db.MustGetServerUser("course-other@test.edulinq.org")
+	courseID := assignment.GetCourse().GetID()
+	tomorrow := timestamp.Now() + timestamp.FromMSecs(24*60*60*1000)
+	user.CourseInfo[courseID].DueDateOverrides = map[string]timestamp.Timestamp{assignment.ID: tomorrow}
+	db.MustUpsertUser(user)
+
+	submitForRejection(test, assignment, "course-other@test.edulinq.org", false, nil)
+}
+
 func TestRejectLateSubmissionWithAllow(test *testing.T) {
 	db.ResetForTesting()
 	defer db.ResetForTesting()
