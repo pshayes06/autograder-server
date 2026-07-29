@@ -15,7 +15,8 @@ func TestScoringInfoStruct(test *testing.T) {
 	testCases := []*ScoringInfo{
 		nil,
 		&ScoringInfo{},
-		&ScoringInfo{"foo", timestamp.Zero(), timestamp.Zero(), 1.0, 2.0, false, 1, 2, true, SCORING_INFO_STRUCT_VERSION, "foo", "bar"},
+		&ScoringInfo{"", nil, "foo", timestamp.Zero(), timestamp.Zero(), 1.0, 2.0, false, 1, 2, true, SCORING_INFO_STRUCT_VERSION, "foo", "bar"},
+		&ScoringInfo{ProxyUser: "grader@test.edulinq.org", ProxyTime: timestamp.ZeroPointer()},
 	}
 
 	for _, testCase := range testCases {

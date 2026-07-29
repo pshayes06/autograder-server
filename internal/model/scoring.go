@@ -7,15 +7,17 @@ import (
 const SCORING_INFO_STRUCT_VERSION = "1.0.0"
 
 type ScoringInfo struct {
-	ID             string              `json:"id"`
-	SubmissionTime timestamp.Timestamp `json:"submission-time"`
-	UploadTime     timestamp.Timestamp `json:"upload-time"`
-	RawScore       float64             `json:"raw-score"`
-	Score          float64             `json:"score"`
-	Lock           bool                `json:"lock"`
-	LateDayUsage   int                 `json:"late-date-usage"`
-	NumDaysLate    int                 `json:"num-days-late"`
-	Reject         bool                `json:"reject"`
+	ProxyUser	   string	            `json:"proxy-user,omitempty"`
+	ProxyTime      *timestamp.Timestamp `json:"proxy-time,omitempty"`
+	ID             string               `json:"id"`
+	SubmissionTime timestamp.Timestamp  `json:"submission-time"`
+	UploadTime     timestamp.Timestamp  `json:"upload-time"`
+	RawScore       float64              `json:"raw-score"`
+	Score          float64              `json:"score"`
+	Lock           bool                 `json:"lock"`
+	LateDayUsage   int                  `json:"late-date-usage"`
+	NumDaysLate    int                  `json:"num-days-late"`
+	Reject         bool                 `json:"reject"`
 
 	// A distinct key so we can recognize this as an autograder object.
 	AutograderStructVersion string `json:"__autograder__version__"`
@@ -41,7 +43,17 @@ func (this *ScoringInfo) Equal(other *ScoringInfo) bool {
 		return false
 	}
 
-	return (this.ID == other.ID &&
+	if this.ProxyTime != other.ProxyTime {
+		if (this.ProxyTime == nil) || (other.ProxyTime == nil) {
+			return false
+		}
+		if *this.ProxyTime != *other.ProxyTime {
+			return false
+		}
+	}
+
+	return (this.ProxyUser == other.ProxyUser &&
+		this.ID == other.ID &&
 		this.SubmissionTime == other.SubmissionTime &&
 		this.RawScore == other.RawScore &&
 		this.Score == other.Score &&
