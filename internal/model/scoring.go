@@ -7,7 +7,7 @@ import (
 const SCORING_INFO_STRUCT_VERSION = "1.0.0"
 
 type ScoringInfo struct {
-	ProxyUser	   string	            `json:"proxy-user,omitempty"`
+	ProxyUser      string               `json:"proxy-user,omitempty"`
 	ProxyTime      *timestamp.Timestamp `json:"proxy-time,omitempty"`
 	ID             string               `json:"id"`
 	SubmissionTime timestamp.Timestamp  `json:"submission-time"`
