@@ -47,6 +47,7 @@ func (this *ScoringInfo) Equal(other *ScoringInfo) bool {
 		if (this.ProxyTime == nil) || (other.ProxyTime == nil) {
 			return false
 		}
+
 		if *this.ProxyTime != *other.ProxyTime {
 			return false
 		}

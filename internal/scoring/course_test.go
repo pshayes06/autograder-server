@@ -55,15 +55,13 @@ func TestCourseScoringProxy(test *testing.T) {
 	course.Assignments["hw0"].LMSID = "001"
 	assignment := course.Assignments["hw0"]
 
-	proxyTime := timestamp.FromMSecs(1697500000000)
-
 	submission, err := db.GetSubmissionContents(assignment, "course-student@test.edulinq.org", "1697406272")
 	if err != nil {
 		test.Fatalf("Failed to load submission: '%v'.", err)
 	}
 
 	submission.Info.ProxyUser = "course-grader@test.edulinq.org"
-	submission.Info.ProxyStartTime = &proxyTime
+	submission.Info.ProxyStartTime = &expectedProxyTime
 
 	err = db.SaveSubmission(assignment, submission)
 	if err != nil {
