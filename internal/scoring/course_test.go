@@ -67,7 +67,7 @@ func TestCourseScoringProxy(test *testing.T) {
 
 	err = db.SaveSubmission(assignment, submission)
 	if err != nil {
-		test.Fatalf("Failed to re-save proxy submission: '%v'.", err)
+		test.Fatalf("Failed to save proxy information: '%v'.", err)
 	}
 
 	runAndtestResult(test, course, expectedProxy)
@@ -130,6 +130,10 @@ var expectedProxy map[string]map[string]*model.ScoringInfo = map[string]map[stri
 			UploadTime:              timestamp.Zero(),
 			RawScore:                2,
 			Score:                   2,
+			Lock:                    false,
+			LateDayUsage:            0,
+			NumDaysLate:             0,
+			Reject:                  false,
 			AutograderStructVersion: model.SCORING_INFO_STRUCT_VERSION,
 		},
 	},
