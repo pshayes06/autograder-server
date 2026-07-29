@@ -15,7 +15,7 @@ func TestScoringInfoStruct(test *testing.T) {
 	testCases := []*ScoringInfo{
 		nil,
 		&ScoringInfo{},
-		&ScoringInfo{"foo", timestamp.Zero(), timestamp.Zero(), 1.0, 2.0, false, 1, 2, true, SCORING_INFO_STRUCT_VERSION, "foo", "bar"},
+		&ScoringInfo{"grader@test.edulinq.org", timestamp.ZeroPointer(), "foo", timestamp.Zero(), timestamp.Zero(), 1.0, 2.0, false, 1, 2, true, SCORING_INFO_STRUCT_VERSION, "foo", "bar"},
 	}
 
 	for _, testCase := range testCases {

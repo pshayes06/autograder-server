@@ -66,6 +66,8 @@ func (this *GradingResult) GetCombinedOutput() string {
 
 func (this GradingInfo) ToScoringInfo() *ScoringInfo {
 	return &ScoringInfo{
+		ProxyUser:               this.ProxyUser,
+		ProxyTime:               this.ProxyStartTime,
 		ID:                      this.ID,
 		SubmissionTime:          this.GradingStartTime,
 		RawScore:                this.Score,
