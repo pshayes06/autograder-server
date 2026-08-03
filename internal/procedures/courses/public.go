@@ -9,12 +9,17 @@ import (
 
 	"github.com/edulinq/autograder/internal/common"
 	"github.com/edulinq/autograder/internal/model"
+	"github.com/edulinq/autograder/internal/timestamp"
 	"github.com/edulinq/autograder/internal/util"
 )
 
 // Update a course from it's local source directory.
 // This effectivly just triggers a normal update.
 func UpdateFromLocalSource(course *model.Course, options CourseUpsertOptions) (*CourseUpsertResult, error) {
+	if (!course.IsActive(timestamp.Now())) && (!options.Force) {
+		return nil, fmt.Errorf("Failed to update: course is currently inactive.")
+	}
+
 	result, _, err := upsertFromConfigPath(course.GetSourceConfigPath(), options)
 	return result, err
 }

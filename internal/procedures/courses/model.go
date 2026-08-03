@@ -19,6 +19,8 @@ type CourseUpsertPublicOptions struct {
 
 	DryRun     bool `json:"dry-run" help:"Do not actually do the operation, just state what you would do." default:"false"`
 	SkipEmails bool `json:"skip-emails" help:"Skip sending out emails (always true if a dry run)." default:"false"`
+
+	Force bool `json:"force" help:"Force an update even if a course is outside its active window." default:"false"`
 }
 
 type CourseUpsertOptions struct {

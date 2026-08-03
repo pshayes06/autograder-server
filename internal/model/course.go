@@ -10,6 +10,7 @@ import (
 	"github.com/edulinq/autograder/internal/config"
 	"github.com/edulinq/autograder/internal/docker"
 	"github.com/edulinq/autograder/internal/log"
+	"github.com/edulinq/autograder/internal/timestamp"
 	"github.com/edulinq/autograder/internal/util"
 )
 
@@ -25,6 +26,10 @@ type Course struct {
 	// Inheritable by assignments.
 	LatePolicy      *LateGradingPolicy   `json:"late-policy,omitempty"`
 	SubmissionLimit *SubmissionLimitInfo `json:"submission-limit,omitempty"`
+
+	// Course Active Window
+	StartDate *timestamp.Timestamp `json:"start-date,omitempty"`
+	EndDate   *timestamp.Timestamp `json:"end-date,omitempty"`
 
 	Tasks []*UserTaskInfo `json:"tasks,omitempty"`
 
@@ -106,6 +111,12 @@ func (this *Course) Validate() error {
 		err = this.SubmissionLimit.Validate()
 		if err != nil {
 			return fmt.Errorf("Failed to validate submission limit: '%w'.", err)
+		}
+	}
+
+	if (this.StartDate != nil) && (this.EndDate!=nil) {
+		if *this.EndDate < *this.StartDate {
+			return fmt.Errorf("Course end date is before start date.")
 		}
 	}
 
@@ -247,4 +258,16 @@ func (this *Course) GetTemplatesDir() string {
 
 func (this *Course) GetSourceConfigPath() string {
 	return filepath.Join(this.GetBaseSourceDir(), COURSE_CONFIG_FILENAME)
+}
+
+func (this *Course) IsActive(now timestamp.Timestamp) bool {
+	if (this.StartDate != nil) && (now < *this.StartDate) {
+		return false
+	}
+
+	if (this.EndDate != nil) && (now > *this.EndDate) {
+		return false
+	}
+
+	return true
 }
