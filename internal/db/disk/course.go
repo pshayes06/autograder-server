@@ -107,7 +107,17 @@ func (this *backend) GetCourse(courseID string) (*model.Course, error) {
 		return nil, nil
 	}
 
-	return model.LoadCourseFromPath(path, false)
+	course, err := model.LoadCourseFromPath(path, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = this.populateStatuses(course)
+	if err != nil {
+		return nil, err
+	}
+
+	return course, nil
 }
 
 func (this *backend) GetCourses() (map[string]*model.Course, error) {
@@ -129,6 +139,11 @@ func (this *backend) GetCourses() (map[string]*model.Course, error) {
 			course, err := model.LoadCourseFromPath(configPath, false)
 			if err != nil {
 				return fmt.Errorf("Failed to load course '%s': '%w'", configPath, err)
+			}
+
+			err = this.populateStatuses(course)
+			if err != nil {
+				return err
 			}
 
 			courses[course.GetID()] = course
@@ -159,4 +174,14 @@ func (this *backend) getCourseDirFromID(courseID string) string {
 
 func (this *backend) getCoursePathFromID(courseID string) string {
 	return filepath.Join(this.getCourseDirFromID(courseID), model.COURSE_CONFIG_FILENAME)
+}
+
+func (this *backend) populateStatuses(course *model.Course) error {
+	statuses, err := this.GetCourseStatuses(course)
+	if err != nil {
+		return err
+	}
+
+	course.Statuses = statuses
+	return nil
 }

@@ -34,8 +34,8 @@ type Course struct {
 	Tasks []*UserTaskInfo `json:"tasks,omitempty"`
 
 	// Internal fields the autograder will set.
-	Assignments map[string]*Assignment `json:"-"`
-	Statuses    []*CourseStatus        `json:"-"`
+	Assignments map[string]*Assignment   `json:"-"`
+	Statuses    map[string]*CourseStatus `json:"-"`
 }
 
 func (this *Course) GetID() string {

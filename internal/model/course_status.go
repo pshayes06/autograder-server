@@ -8,8 +8,8 @@ type CourseStatus struct {
 	Active bool         `json:"active"`
 	Source StatusSource `json:"source"`
 
-	// Email of the user who set the status, if applicable
-	Owner string `json:"owner,omitempty"`
+	// User who set the status
+	Owner string `json:"owner"`
 
 	// Optional message to describe the status reason
 	Message string `json:"message,omitempty"`
@@ -43,7 +43,7 @@ func (this *CourseStatus) hasPriorityOver(other *CourseStatus) bool {
 }
 
 // Iterates through every status to determine which should actually be used
-func determineStatus(statuses []*CourseStatus) *CourseStatus {
+func determineStatus(statuses map[string]*CourseStatus) *CourseStatus {
 	var best *CourseStatus
 	for _, status := range statuses {
 		if best == nil || status.hasPriorityOver(best) {
