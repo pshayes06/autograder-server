@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/edulinq/autograder/internal/timestamp"
+	"github.com/edulinq/autograder/internal/util"
 )
 
 type CourseStatus struct {
@@ -20,18 +21,51 @@ type CourseStatus struct {
 // Represents the source of a course status, which is either a user or automated process.
 type StatusSource int
 
-// SourceUnknown is the zero value and is not a valid source.
-// SourceCourse is for users with admin/owner privileges in the course.
-// SourceServer is for users with admin/owner privileges in the server.
-// SourceAutomated is for automated processes.
-// SourceRoot is for users with root privileges.
+// StatusSourceUnknown is the zero value and is not a valid source.
+// StatusSourceCourse is for users with admin/owner privileges in the course.
+// StatusSourceServer is for users with admin/owner privileges in the server.
+// StatusSourceAutomated is for automated processes.
+// StatusSourceRoot is for users with root privileges.
 const (
-	SourceUnknown   StatusSource = 0
-	SourceCourse                 = 10
-	SourceServer                 = 20
-	SourceAutomated              = 30
-	SourceRoot                   = 40
+	StatusSourceUnknown   StatusSource = 0
+	StatusSourceCourse                 = 10
+	StatusSourceServer                 = 20
+	StatusSourceAutomated              = 30
+	StatusSourceRoot                   = 40
 )
+
+var statusSourceToString = map[StatusSource]string{
+	StatusSourceUnknown:   "unknown",
+	StatusSourceCourse:    "course",
+	StatusSourceServer:    "server",
+	StatusSourceAutomated: "automated",
+	StatusSourceRoot:      "root",
+}
+
+var stringToStatusSource = map[string]StatusSource{
+	"unknown":   StatusSourceUnknown,
+	"course":    StatusSourceCourse,
+	"server":    StatusSourceServer,
+	"automated": StatusSourceAutomated,
+	"root":      StatusSourceRoot,
+}
+
+func (this StatusSource) String() string {
+	return statusSourceToString[this]
+}
+
+func (this StatusSource) MarshalJSON() ([]byte, error) {
+	return util.MarshalEnum(this, statusSourceToString)
+}
+
+func (this *StatusSource) UnmarshalJSON(data []byte) error {
+	value, err := util.UnmarshalEnum(data, stringToStatusSource, true)
+	if err == nil {
+		*this = *value
+	}
+
+	return err
+}
 
 // Checks if a status has priority over another status, which is determined through the StatusSource hierarchy.
 // Ties are broken by the SetTime, giving priority to the most recently set status.
