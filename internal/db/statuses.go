@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/edulinq/autograder/internal/log"
 	"github.com/edulinq/autograder/internal/model"
 )
 
@@ -20,4 +21,11 @@ func UpsertCourseStatuses(courseID string, statuses map[string]*model.CourseStat
 	}
 
 	return backend.UpsertCourseStatuses(courseID, statuses)
+}
+
+func MustUpsertCourseStatuses(courseID string, statuses map[string]*model.CourseStatus) {
+	err := UpsertCourseStatuses(courseID, statuses)
+	if err != nil {
+		log.Fatal("Failed to upsert course statuses.", err)
+	}
 }

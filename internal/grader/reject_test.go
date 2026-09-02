@@ -18,6 +18,19 @@ const TEST_ASSIGNMENT_ID = "bash"
 
 var SUBMISSION_RELPATH string = filepath.Join("test-submissions", "solution")
 
+// Reject submission if the course is inactive
+func TestRejectSubmissionInactiveCourse(test *testing.T) {
+	db.ResetForTesting()
+	defer db.ResetForTesting()
+
+	// Upsert inactive status
+	db.MustUpsertCourseStatuses(TEST_COURSE_ID, map[string]*model.CourseStatus{"tester": {Active: false}})
+
+	assignment := db.MustGetTestSubmissionAssignment()
+	assignment.SubmissionLimit = &model.SubmissionLimitInfo{}
+	submitForRejection(test, assignment, "course-student@test.edulinq.org", false, &RejectInactiveCourse{assignment.GetCourse().GetDisplayName()})
+}
+
 // Ensure that admin submissions are never rejected.
 func TestRejectSubmissionAdminOverride(test *testing.T) {
 	db.ResetForTesting()

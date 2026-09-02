@@ -2081,6 +2081,10 @@
             "category": "struct",
             "fields": [
                 {
+                    "name": "active",
+                    "type": "bool"
+                },
+                {
                     "name": "assignments",
                     "type": "map[string]*core.AssignmentInfo"
                 },
@@ -2091,6 +2095,10 @@
                 {
                     "name": "name",
                     "type": "string"
+                },
+                {
+                    "name": "statuses",
+                    "type": "map[string]*model.CourseStatus"
                 }
             ]
         },
@@ -2550,6 +2558,33 @@
                 {
                     "name": "unchanged-assignments",
                     "type": "[]model.AssignmentInfo"
+                }
+            ]
+        },
+        "model.CourseStatus": {
+            "category": "struct",
+            "fields": [
+                {
+                    "name": "active",
+                    "type": "bool"
+                },
+                {
+                    "description": "Optional message to describe the status reason",
+                    "name": "message",
+                    "type": "string"
+                },
+                {
+                    "description": "User who set the status",
+                    "name": "owner",
+                    "type": "string"
+                },
+                {
+                    "name": "set-time",
+                    "type": "int64"
+                },
+                {
+                    "name": "source",
+                    "type": "int"
                 }
             ]
         },
@@ -3168,6 +3203,11 @@
             "alias-type": "int",
             "category": "alias",
             "description": "Server user roles represent a user's role within an autograder server instance."
+        },
+        "model.StatusSource": {
+            "alias-type": "int",
+            "category": "alias",
+            "description": "Represents the source of a course status, which is either a user or automated process."
         },
         "model.SubmissionHistoryItem": {
             "category": "struct",
