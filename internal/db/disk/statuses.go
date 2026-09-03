@@ -22,11 +22,11 @@ func (this *backend) GetCourseStatuses(course *model.Course) (map[string]*model.
 	return allStatuses, nil
 }
 
-func (this *backend) UpsertCourseStatuses(courseID string, upsertStatuses map[string]*model.CourseStatus) error {
+func (this *backend) UpsertCourseStatuses(course *model.Course, upsertStatuses map[string]*model.CourseStatus) error {
 	this.statusLock.Lock()
 	defer this.statusLock.Unlock()
 
-	statuses, err := this.getStatuses(courseID)
+	statuses, err := this.getStatuses(course.ID)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (this *backend) UpsertCourseStatuses(courseID string, upsertStatuses map[st
 		}
 	}
 
-	return this.writeStatuses(courseID, statuses)
+	return this.writeStatuses(course.ID, statuses)
 }
 
 func (this *backend) getStatusesPath(courseID string) string {

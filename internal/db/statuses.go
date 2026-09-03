@@ -15,16 +15,16 @@ func GetCourseStatuses(course *model.Course) (map[string]*model.CourseStatus, er
 	return backend.GetCourseStatuses(course)
 }
 
-func UpsertCourseStatuses(courseID string, statuses map[string]*model.CourseStatus) error {
+func UpsertCourseStatuses(course *model.Course, statuses map[string]*model.CourseStatus) error {
 	if backend == nil {
 		return fmt.Errorf("Database has not been opened.")
 	}
 
-	return backend.UpsertCourseStatuses(courseID, statuses)
+	return backend.UpsertCourseStatuses(course, statuses)
 }
 
-func MustUpsertCourseStatuses(courseID string, statuses map[string]*model.CourseStatus) {
-	err := UpsertCourseStatuses(courseID, statuses)
+func MustUpsertCourseStatuses(course *model.Course, statuses map[string]*model.CourseStatus) {
+	err := UpsertCourseStatuses(course, statuses)
 	if err != nil {
 		log.Fatal("Failed to upsert course statuses.", err)
 	}

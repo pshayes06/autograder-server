@@ -61,7 +61,7 @@ func TestTaskCoreSkipInactiveCourse(test *testing.T) {
 		enableTaskEngine = false
 	}()
 
-	db.MustUpsertCourseStatuses("course101", map[string]*model.CourseStatus{"tester": {Active: false}})
+	db.MustUpsertCourseStatuses(db.MustGetCourse("course101"), map[string]*model.CourseStatus{"tester": {Active: false}})
 
 	task := &model.FullScheduledTask{
 		UserTaskInfo: model.UserTaskInfo{

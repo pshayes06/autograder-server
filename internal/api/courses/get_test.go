@@ -96,7 +96,7 @@ func TestGetInactiveCourse(test *testing.T) {
 		},
 	}
 
-	db.MustUpsertCourseStatuses("course101", testStatuses)
+	db.MustUpsertCourseStatuses(db.MustGetCourse("course101"), testStatuses)
 
 	fields := map[string]any{
 		"course-id": "course101",

@@ -42,7 +42,7 @@ func TestRemove(test *testing.T) {
 		},
 	}
 
-	db.MustUpsertCourseStatuses("course101", statuses)
+	db.MustUpsertCourseStatuses(db.MustGetCourse("course101"), statuses)
 
 	testCases := []struct {
 		email    string

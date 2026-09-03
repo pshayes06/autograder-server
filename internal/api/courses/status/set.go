@@ -3,6 +3,7 @@ package status
 import (
 	"github.com/edulinq/autograder/internal/api/core"
 	"github.com/edulinq/autograder/internal/db"
+	"github.com/edulinq/autograder/internal/log"
 	"github.com/edulinq/autograder/internal/model"
 )
 
@@ -41,10 +42,19 @@ func HandleSet(request *SetRequest) (*SetResponse, *core.APIError) {
 		SetTime: request.Timestamp,
 	}
 
-	err := db.UpsertCourseStatuses(request.Course.ID, map[string]*model.CourseStatus{owner: status})
+	err := db.UpsertCourseStatuses(request.Course, map[string]*model.CourseStatus{owner: status})
 	if err != nil {
 		return nil, core.NewInternalError("-647", request, "Failed to upsert status.").Err(err)
 	}
+
+	log.Info(
+		"Course status set.",
+		request.Course,
+		request.ServerUser,
+		log.NewAttr("message", request.Message),
+		log.NewAttr("active", request.Active),
+		log.NewAttr("source", status.Source),
+	)
 
 	return &SetResponse{Status: status}, nil
 }

@@ -3,6 +3,7 @@ package status
 import (
 	"github.com/edulinq/autograder/internal/api/core"
 	"github.com/edulinq/autograder/internal/db"
+	"github.com/edulinq/autograder/internal/log"
 	"github.com/edulinq/autograder/internal/model"
 )
 
@@ -16,7 +17,7 @@ type RemoveRequest struct {
 	// If true, remove all statuses the caller has permission to remove.
 	Clear bool `json:"clear"`
 
-	// Optional message to include with status removal.
+	// Optional log message to include with status removal.
 	Message string `json:"message"`
 }
 
@@ -54,7 +55,7 @@ func HandleRemove(request *RemoveRequest) (*RemoveResponse, *core.APIError) {
 	}
 
 	if len(deletionMap) > 0 {
-		err := db.UpsertCourseStatuses(request.Course.ID, deletionMap)
+		err := db.UpsertCourseStatuses(request.Course, deletionMap)
 		if err != nil {
 			return nil, core.NewInternalError("-649", request, "Failed to upsert status.").Err(err)
 		}
@@ -66,7 +67,13 @@ func HandleRemove(request *RemoveRequest) (*RemoveResponse, *core.APIError) {
 		removed = append(removed, owner)
 	}
 
-	return &RemoveResponse{Removed: removed}, nil
+	log.Info(
+		"Course status removal.",
+		request.Course,
+		request.ServerUser,
+		log.NewAttr("message", request.Message),
+		log.NewAttr("removed", removed),
+	)
 
-	//need to do logging stuff too
+	return &RemoveResponse{Removed: removed}, nil
 }

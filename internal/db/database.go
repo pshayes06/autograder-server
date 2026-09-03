@@ -172,7 +172,7 @@ type Backend interface {
 
 	// Upsert statuses for a course, keyed by owner.
 	// A nil value will delete that owner's status.
-	UpsertCourseStatuses(courseID string, statuses map[string]*model.CourseStatus) error
+	UpsertCourseStatuses(course *model.Course, statuses map[string]*model.CourseStatus) error
 
 	// Logging Operations
 
