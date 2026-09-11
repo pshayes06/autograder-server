@@ -7,64 +7,42 @@ import (
 	"github.com/edulinq/autograder/internal/api/core"
 	"github.com/edulinq/autograder/internal/db"
 	"github.com/edulinq/autograder/internal/model"
-	"github.com/edulinq/autograder/internal/timestamp"
 	"github.com/edulinq/autograder/internal/util"
 )
 
 func TestRemove(test *testing.T) {
-	db.ResetForTesting()
 	defer db.ResetForTesting()
 
-	statuses := map[string]*model.CourseStatus{
-		"course-admin@test.edulinq.org": {
-			Active:  true,
-			Source:  model.StatusSourceCourse,
-			Owner:   "course-admin@test.edulinq.org",
-			SetTime: timestamp.Now(),
-		},
-		"course-owner@test.edulinq.org": {
-			Active:  false,
-			Source:  model.StatusSourceCourse,
-			Owner:   "course-owner@test.edulinq.org",
-			SetTime: timestamp.Now(),
-		},
-		"server-admin@test.edulinq.org": {
-			Active:  true,
-			Source:  model.StatusSourceServer,
-			Owner:   "server-admin@test.edulinq.org",
-			SetTime: timestamp.Now(),
-		},
-		"server-owner@test.edulinq.org": {
-			Active:  false,
-			Source:  model.StatusSourceServer,
-			Owner:   "server-owner@test.edulinq.org",
-			SetTime: timestamp.Now(),
-		},
-	}
-
-	db.MustUpsertCourseStatuses(db.MustGetCourse("course101"), statuses)
-
 	testCases := []struct {
-		email    string
-		target   string
-		clear    bool
-		locator  string
-		expected []string
+		email            string
+		target           string
+		clear            bool
+		existingStatuses map[string]*model.CourseStatus
+		locator          string
+		expectedOwners   []string
 	}{
-		// Basic deletion
+		// Basic Deletion
 		{
 			"course-owner",
 			"",
 			false,
+			map[string]*model.CourseStatus{
+				"course-owner@test.edulinq.org": {Source: model.StatusSourceCourse},
+			},
 			"",
-			[]string{"course-owner@test.edulinq.org"},
+			[]string{
+				"course-owner@test.edulinq.org",
+			},
 		},
 
-		// Finding nothing to delete
+		// Having nothing to delete.
 		{
 			"course-owner",
 			"",
 			false,
+			map[string]*model.CourseStatus{
+				"course-admin@test.edulinq.org": {Source: model.StatusSourceCourse},
+			},
 			"",
 			[]string{},
 		},
@@ -72,15 +50,21 @@ func TestRemove(test *testing.T) {
 			"course-owner",
 			"fake-user@test.edulinq.org",
 			false,
+			map[string]*model.CourseStatus{
+				"course-admin@test.edulinq.org": {Source: model.StatusSourceCourse},
+			},
 			"",
 			[]string{},
 		},
 
-		// Deleting and clearing targets with higher status
+		// Deleting and clearing targets with higher status.
 		{
 			"course-owner",
 			"server-admin@test.edulinq.org",
 			false,
+			map[string]*model.CourseStatus{
+				"server-admin@test.edulinq.org": {Source: model.StatusSourceServer},
+			},
 			"-648",
 			nil,
 		},
@@ -88,24 +72,40 @@ func TestRemove(test *testing.T) {
 			"course-admin",
 			"",
 			true,
+			map[string]*model.CourseStatus{
+				"course-admin@test.edulinq.org": {Source: model.StatusSourceCourse},
+				"server-admin@test.edulinq.org": {Source: model.StatusSourceServer},
+			},
 			"",
-			[]string{"course-admin@test.edulinq.org"},
+			[]string{
+				"course-admin@test.edulinq.org",
+			},
 		},
 
-		// True clear when caller has highest StatusSource
+		// Clear when the caller has highest StatusSource.
 		{
 			"server-admin",
 			"",
 			true,
+			map[string]*model.CourseStatus{
+				"course-admin@test.edulinq.org": {Source: model.StatusSourceCourse},
+				"server-admin@test.edulinq.org": {Source: model.StatusSourceServer},
+				"server-owner@test.edulinq.org": {Source: model.StatusSourceServer},
+			},
 			"",
-			[]string{"server-admin@test.edulinq.org", "server-owner@test.edulinq.org"},
+			[]string{
+				"course-admin@test.edulinq.org",
+				"server-admin@test.edulinq.org",
+				"server-owner@test.edulinq.org",
+			},
 		},
 
-		// Clearing when empty
+		// Clearing when empty.
 		{
 			"server-owner",
 			"",
 			true,
+			map[string]*model.CourseStatus{},
 			"",
 			[]string{},
 		},
@@ -115,12 +115,19 @@ func TestRemove(test *testing.T) {
 			"course-grader",
 			"",
 			false,
+			map[string]*model.CourseStatus{},
 			"-020",
 			nil,
 		},
 	}
 
 	for i, testCase := range testCases {
+		db.ResetForTesting()
+
+		course := db.MustGetCourse("course101")
+		course.Statuses = testCase.existingStatuses
+		db.MustSaveCourse(course)
+
 		fields := map[string]any{
 			"course-id":    "course101",
 			"target-owner": testCase.target,
@@ -149,19 +156,15 @@ func TestRemove(test *testing.T) {
 		var responseContent RemoveResponse
 		util.MustJSONFromString(util.MustToJSON(response.Content), &responseContent)
 
-		removed := responseContent.Removed
-		slices.Sort(removed)
-
-		if !slices.Equal(removed, testCase.expected) {
-			test.Errorf("Case %d: Expected '%v', found '%v'.", i, testCase.expected, removed)
+		removedOwners := []string{}
+		for owner := range responseContent.Removed {
+			removedOwners = append(removedOwners, owner)
 		}
-	}
 
-	finalStatuses, err := db.GetCourseStatuses(db.MustGetCourse("course101"))
-	if err != nil {
-		test.Fatalf("Failed to get final statuses: '%v'.", err)
-	}
-	if len(finalStatuses) != 0 {
-		test.Fatalf("Expected all statuses removed, found %d.", len(finalStatuses))
+		slices.Sort(removedOwners)
+
+		if !slices.Equal(removedOwners, testCase.expectedOwners) {
+			test.Errorf("Case %d: Expected '%v', found '%v'.", i, testCase.expectedOwners, removedOwners)
+		}
 	}
 }

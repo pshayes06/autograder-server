@@ -29,7 +29,6 @@ type backend struct {
 	tasksLock              sync.RWMutex
 	analysisIndividualLock sync.RWMutex
 	analysisPairwiseLock   sync.RWMutex
-	statusLock             sync.RWMutex
 }
 
 func Open() (*backend, error) {

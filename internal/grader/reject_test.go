@@ -23,8 +23,10 @@ func TestRejectSubmissionInactiveCourse(test *testing.T) {
 	db.ResetForTesting()
 	defer db.ResetForTesting()
 
-	// Upsert inactive status
-	db.MustUpsertCourseStatuses(db.MustGetCourse(TEST_COURSE_ID), map[string]*model.CourseStatus{"tester": {Active: false}})
+	// Set an inactive status.
+	course := db.MustGetCourse(TEST_COURSE_ID)
+	course.Statuses = map[string]*model.CourseStatus{"tester": {Active: false}}
+	db.MustSaveCourse(course)
 
 	assignment := db.MustGetTestSubmissionAssignment()
 	assignment.SubmissionLimit = &model.SubmissionLimitInfo{}

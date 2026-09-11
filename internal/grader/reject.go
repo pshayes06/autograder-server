@@ -84,8 +84,8 @@ func checkForRejection(assignment *model.Assignment, submissionPath string, emai
 		return nil, nil
 	}
 
-	// Reject if course is inactive
-	if !assignment.GetCourse().IsActive(timestamp.Now()) {
+	// Reject if the course is inactive.
+	if !assignment.GetCourse().IsActiveNow() {
 		return &RejectInactiveCourse{assignment.GetCourse().GetDisplayName()}, nil
 	}
 

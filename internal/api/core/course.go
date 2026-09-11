@@ -49,7 +49,7 @@ func NewCourseInfo(course *model.Course) *CourseInfo {
 	return &CourseInfo{
 		ID:          course.ID,
 		Name:        course.Name,
-		Active:      course.IsActive(timestamp.Now()),
+		Active:      course.IsActiveNow(),
 		Assignments: assignments,
 		Statuses:    course.Statuses,
 	}

@@ -22,49 +22,43 @@ type RemoveRequest struct {
 }
 
 type RemoveResponse struct {
-	Removed []string `json:"removed"`
+	Removed map[string]model.CourseStatus `json:"removed"`
 }
 
+// Remove one or more course statuses based on the caller's permissions.
 func HandleRemove(request *RemoveRequest) (*RemoveResponse, *core.APIError) {
-
 	callerSource := determineSource(request.ServerUser.Role)
 	courseStatuses := request.Course.Statuses
 
-	deletionMap := make(map[string]*model.CourseStatus)
+	removed := make(map[string]model.CourseStatus)
 
 	if request.Clear {
 		for owner, status := range courseStatuses {
 			if callerSource >= status.Source {
-				deletionMap[owner] = nil
+				delete(courseStatuses, owner)
+				removed[owner] = *status
 			}
 		}
-	} else if request.TargetOwner != "" {
-		targetStatus, ok := courseStatuses[request.TargetOwner]
+	} else {
+		target := request.TargetOwner
+		if target == "" {
+			target = request.ServerUser.Email
+		}
+
+		targetStatus, ok := courseStatuses[target]
 		if ok {
 			if callerSource < targetStatus.Source {
 				return nil, core.NewPermissionsError("-648", request, targetStatus.Source, callerSource, "Cannot remove a status with a higher source.")
 			}
 
-			deletionMap[request.TargetOwner] = nil
-		}
-	} else {
-		_, ok := courseStatuses[request.ServerUser.Email]
-		if ok {
-			deletionMap[request.ServerUser.Email] = nil
+			delete(courseStatuses, target)
+			removed[target] = *targetStatus
 		}
 	}
 
-	if len(deletionMap) > 0 {
-		err := db.UpsertCourseStatuses(request.Course, deletionMap)
-		if err != nil {
-			return nil, core.NewInternalError("-649", request, "Failed to upsert status.").Err(err)
-		}
-	}
-
-	removed := []string{}
-
-	for owner := range deletionMap {
-		removed = append(removed, owner)
+	err := db.SaveCourse(request.Course)
+	if err != nil {
+		return nil, core.NewInternalError("-649", request, "Failed to save course status.").Err(err)
 	}
 
 	log.Info(

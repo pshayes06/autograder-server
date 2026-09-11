@@ -1,6 +1,8 @@
 package status
 
 import (
+	"fmt"
+
 	"github.com/edulinq/autograder/internal/api/core"
 	"github.com/edulinq/autograder/internal/db"
 	"github.com/edulinq/autograder/internal/log"
@@ -11,13 +13,13 @@ type SetRequest struct {
 	core.APIRequestCourseUserContext
 	core.MinCourseRoleAdmin
 
-	// Indicates whether course should be active or inactive.
+	// Indicates whether the course should be active or inactive.
 	Active bool `json:"active"`
 
-	// Optional message to include with status change.
+	// Optional message to include with the status change.
 	Message string `json:"message"`
 
-	// If status already exists for user, allows overwrite for existing status.
+	// If the status already exists for the user, allows an overwrite.
 	Force bool `json:"force"`
 }
 
@@ -25,13 +27,15 @@ type SetResponse struct {
 	Status *model.CourseStatus `json:"status"`
 }
 
+// Set the status of a course, where each user can have at most one status.
 func HandleSet(request *SetRequest) (*SetResponse, *core.APIError) {
-
 	owner := request.ServerUser.Email
 
-	_, ok := request.Course.Statuses[owner]
+	existingStatus, ok := request.Course.Statuses[owner]
 	if ok && !request.Force {
-		return nil, core.NewBadRequestError("-646", request, "Existing status for owner (must force to overwrite).")
+		return nil, core.NewBadRequestError("-646", request,
+			fmt.Sprintf("Incoming status must be forced to overwrite existing (set at %s).",
+				existingStatus.SetTime.SafeString()))
 	}
 
 	status := &model.CourseStatus{
@@ -42,9 +46,11 @@ func HandleSet(request *SetRequest) (*SetResponse, *core.APIError) {
 		SetTime: request.Timestamp,
 	}
 
-	err := db.UpsertCourseStatuses(request.Course, map[string]*model.CourseStatus{owner: status})
+	request.Course.Statuses[owner] = status
+
+	err := db.SaveCourse(request.Course)
 	if err != nil {
-		return nil, core.NewInternalError("-647", request, "Failed to upsert status.").Err(err)
+		return nil, core.NewInternalError("-647", request, "Failed to save course status.").Err(err)
 	}
 
 	log.Info(
@@ -59,7 +65,8 @@ func HandleSet(request *SetRequest) (*SetResponse, *core.APIError) {
 	return &SetResponse{Status: status}, nil
 }
 
-// Finds the highest StatusSource using the user's server role
+// Finds the highest StatusSource using the user's server role.
+// The request permissions require the caller to be at least a course admin.
 func determineSource(serverRole model.ServerUserRole) model.StatusSource {
 	if serverRole >= model.ServerRoleRoot {
 		return model.StatusSourceRoot

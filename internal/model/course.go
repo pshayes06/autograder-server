@@ -31,11 +31,12 @@ type Course struct {
 	StartDate *timestamp.Timestamp `json:"start-date,omitempty"`
 	EndDate   *timestamp.Timestamp `json:"end-date,omitempty"`
 
+	Statuses map[string]*CourseStatus `json:"statuses,omitempty"`
+
 	Tasks []*UserTaskInfo `json:"tasks,omitempty"`
 
 	// Internal fields the autograder will set.
-	Assignments map[string]*Assignment   `json:"-"`
-	Statuses    map[string]*CourseStatus `json:"-"`
+	Assignments map[string]*Assignment `json:"-"`
 }
 
 func (this *Course) GetID() string {
@@ -119,6 +120,11 @@ func (this *Course) Validate() error {
 		if *this.EndDate < *this.StartDate {
 			return fmt.Errorf("Course end date is before start date.")
 		}
+	}
+
+	// Creating an empty map for safe write operations.
+	if this.Statuses == nil {
+		this.Statuses = make(map[string]*CourseStatus)
 	}
 
 	if this.Tasks == nil {
@@ -261,19 +267,37 @@ func (this *Course) GetSourceConfigPath() string {
 	return filepath.Join(this.GetBaseSourceDir(), COURSE_CONFIG_FILENAME)
 }
 
-func (this *Course) IsActive(now timestamp.Timestamp) bool {
-	highestStatus := determineStatus(this.Statuses)
+// Returns the highest-priority status, or nil if the course has none.
+func (this *Course) GetActiveStatus() *CourseStatus {
+	var best *CourseStatus
+	for _, status := range this.Statuses {
+		if (best == nil) || (status.compareTo(best) > 0) {
+			best = status
+		}
+	}
+
+	return best
+}
+
+// Returns whether a course is active at a specific time, defaulting to true.
+// If there are no statuses, the date window is checked.
+func (this *Course) IsActive(time timestamp.Timestamp) bool {
+	highestStatus := this.GetActiveStatus()
 	if highestStatus != nil {
 		return highestStatus.Active
 	}
 
-	if (this.StartDate != nil) && (now < *this.StartDate) {
+	if (this.StartDate != nil) && (time < *this.StartDate) {
 		return false
 	}
 
-	if (this.EndDate != nil) && (now > *this.EndDate) {
+	if (this.EndDate != nil) && (time > *this.EndDate) {
 		return false
 	}
 
 	return true
+}
+
+func (this *Course) IsActiveNow() bool {
+	return this.IsActive(timestamp.Now())
 }

@@ -86,24 +86,6 @@ func runNextTask() {
 		return
 	}
 
-	// Skip a task run if its course is inactive
-	if task.CourseID != "" {
-		course, err := db.GetCourse(task.CourseID)
-		if err != nil {
-			log.Error("Failed to get course for scheduled task.", task, err)
-			return
-		}
-
-		if (course != nil) && !course.IsActive(startTimestamp) {
-			task.AdvanceRunTimes()
-			err = db.UpsertActiveTask(task)
-			if err != nil {
-				log.Error("Failed to save task.", err)
-			}
-			return
-		}
-	}
-
 	log.Debug("Task started.", task)
 	runTask(task)
 	log.Debug("Task finished.", task)

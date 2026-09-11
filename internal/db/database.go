@@ -165,15 +165,6 @@ type Backend interface {
 	// and a nil value indicates that the given task should be removed.
 	UpsertActiveTasks(tasks map[string]*model.FullScheduledTask) error
 
-	// Course Status Operations
-
-	// Get all statuses for a course, keyed by owner.
-	GetCourseStatuses(course *model.Course) (map[string]*model.CourseStatus, error)
-
-	// Upsert statuses for a course, keyed by owner.
-	// A nil value will delete that owner's status.
-	UpsertCourseStatuses(course *model.Course, statuses map[string]*model.CourseStatus) error
-
 	// Logging Operations
 
 	// DB backends will also be used as logging storage backends.

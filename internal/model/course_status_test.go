@@ -6,37 +6,119 @@ import (
 	"github.com/edulinq/autograder/internal/timestamp"
 )
 
-func TestDetermineStatus(test *testing.T) {
-	statuses := map[string]*CourseStatus{
-		"course-admin@test.edulinq.org": {
-			Active:  false,
-			Source:  StatusSourceCourse,
-			Owner:   "course-admin@test.edulinq.org",
-			SetTime: timestamp.Zero(),
+func TestGetActiveStatus(test *testing.T) {
+	testCases := []struct {
+		statuses      map[string]*CourseStatus
+		expectedOwner string
+	}{
+		// No statuses, so GetActiveStatus returns nil.
+		{
+			map[string]*CourseStatus{},
+			"",
 		},
-		"server-owner@test.edulinq.org": {
-			Active:  true,
-			Source:  StatusSourceServer,
-			Owner:   "server-owner@test.edulinq.org",
-			SetTime: timestamp.Zero(),
+
+		// Single Status
+		{
+			map[string]*CourseStatus{
+				"course-admin@test.edulinq.org": {
+					Source:  StatusSourceCourse,
+					Owner:   "course-admin@test.edulinq.org",
+					SetTime: timestamp.Now(),
+				},
+			},
+			"course-admin@test.edulinq.org",
+		},
+
+		// Conflicting StatusSource
+		{
+			map[string]*CourseStatus{
+				"course-admin@test.edulinq.org": {
+					Source:  StatusSourceCourse,
+					Owner:   "course-admin@test.edulinq.org",
+					SetTime: timestamp.Now(),
+				},
+				"server-admin@test.edulinq.org": {
+					Source:  StatusSourceServer,
+					Owner:   "server-admin@test.edulinq.org",
+					SetTime: timestamp.Now(),
+				},
+			},
+			"server-admin@test.edulinq.org",
+		},
+		{
+			map[string]*CourseStatus{
+				"automated@test.edulinq.org": {
+					Source:  StatusSourceAutomated,
+					Owner:   "automated@test.edulinq.org",
+					SetTime: timestamp.Now(),
+				},
+				"server-owner@test.edulinq.org": {
+					Source:  StatusSourceServer,
+					Owner:   "server-owner@test.edulinq.org",
+					SetTime: timestamp.Now(),
+				},
+			},
+			"automated@test.edulinq.org",
+		},
+
+		// Tie on StatusSource (picks most recent SetTime).
+		{
+			map[string]*CourseStatus{
+				"server-owner@test.edulinq.org": {
+					Source:  StatusSourceServer,
+					Owner:   "server-owner@test.edulinq.org",
+					SetTime: timestamp.Zero(),
+				},
+				"server-admin@test.edulinq.org": {
+					Source:  StatusSourceServer,
+					Owner:   "server-admin@test.edulinq.org",
+					SetTime: timestamp.FromMSecs(100),
+				},
+			},
+			"server-admin@test.edulinq.org",
+		},
+
+		// Tie on StatusSource and SetTime (picks owner string that comes latest in lexicographical order).
+		{
+			map[string]*CourseStatus{
+				"server-owner@test.edulinq.org": {
+					Source:  StatusSourceServer,
+					Owner:   "server-owner@test.edulinq.org",
+					SetTime: timestamp.FromMSecs(100),
+				},
+				"server-admin@test.edulinq.org": {
+					Source:  StatusSourceServer,
+					Owner:   "server-admin@test.edulinq.org",
+					SetTime: timestamp.FromMSecs(100),
+				},
+				"z-server-owner@test.edulinq.org": {
+					Source:  StatusSourceServer,
+					Owner:   "z-server-owner@test.edulinq.org",
+					SetTime: timestamp.FromMSecs(100),
+				},
+			},
+			"z-server-owner@test.edulinq.org",
 		},
 	}
 
-	if determineStatus(statuses).Owner != "server-owner@test.edulinq.org" {
-		test.Fatalf("Expected server-owner to win (higher source), got '%s'.",
-			determineStatus(statuses).Owner)
-	}
+	for i, testCase := range testCases {
+		course := &Course{
+			Statuses: testCase.statuses,
+		}
 
-	// Adding a more recent StatusSourceServer
-	statuses["server-admin@test.edulinq.org"] = &CourseStatus{
-		Active:  false,
-		Source:  StatusSourceServer,
-		Owner:   "server-admin@test.edulinq.org",
-		SetTime: timestamp.FromMSecs(100),
-	}
+		result := course.GetActiveStatus()
 
-	if determineStatus(statuses).Owner != "server-admin@test.edulinq.org" {
-		test.Fatalf("Expected server-admin to win (more recent), got '%s'.",
-			determineStatus(statuses).Owner)
+		if result == nil {
+			if testCase.expectedOwner != "" {
+				test.Errorf("Case %d: Expected owner '%s', found empty statuses.",
+					i, testCase.expectedOwner)
+			}
+			continue
+		}
+
+		if result.Owner != testCase.expectedOwner {
+			test.Errorf("Case %d: Expected owner '%s', found '%s'.",
+				i, testCase.expectedOwner, result.Owner)
+		}
 	}
 }

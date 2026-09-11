@@ -1181,6 +1181,94 @@
                 }
             ]
         },
+        "courses/status/remove": {
+            "description": "Remove one or more course statuses based on the caller's permissions.",
+            "input": [
+                {
+                    "description": "If true, remove all statuses the caller has permission to remove.",
+                    "name": "clear",
+                    "type": "bool"
+                },
+                {
+                    "description": "The ID of the course to make this request to.",
+                    "name": "course-id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "description": "Optional log message to include with status removal.",
+                    "name": "message",
+                    "type": "string"
+                },
+                {
+                    "description": "Email of status owner to remove. Defaults to the caller.",
+                    "name": "target-owner",
+                    "type": "string"
+                },
+                {
+                    "description": "The email of the user making this request.",
+                    "name": "user-email",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "description": "The password of the user making this request.",
+                    "name": "user-pass",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "output": [
+                {
+                    "name": "removed",
+                    "type": "map[string]model.CourseStatus"
+                }
+            ]
+        },
+        "courses/status/set": {
+            "description": "Set the status of a course, where each user can have at most one status.",
+            "input": [
+                {
+                    "description": "Indicates whether the course should be active or inactive.",
+                    "name": "active",
+                    "type": "bool"
+                },
+                {
+                    "description": "The ID of the course to make this request to.",
+                    "name": "course-id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "description": "If the status already exists for the user, allows an overwrite.",
+                    "name": "force",
+                    "type": "bool"
+                },
+                {
+                    "description": "Optional message to include with the status change.",
+                    "name": "message",
+                    "type": "string"
+                },
+                {
+                    "description": "The email of the user making this request.",
+                    "name": "user-email",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "description": "The password of the user making this request.",
+                    "name": "user-pass",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "output": [
+                {
+                    "name": "status",
+                    "type": "*model.CourseStatus"
+                }
+            ]
+        },
         "courses/upsert/filespec": {
             "description": "Upsert a course using a filespec.",
             "input": [
@@ -2569,12 +2657,12 @@
                     "type": "bool"
                 },
                 {
-                    "description": "Optional message to describe the status reason",
+                    "description": "Optional message to describe the status reason.",
                     "name": "message",
                     "type": "string"
                 },
                 {
-                    "description": "User who set the status",
+                    "description": "User who set the status.",
                     "name": "owner",
                     "type": "string"
                 },
@@ -3207,7 +3295,7 @@
         "model.StatusSource": {
             "alias-type": "int",
             "category": "alias",
-            "description": "Represents the source of a course status, which is either a user or automated process."
+            "description": "Represents the initiator of a course status, which is either a user or automated process."
         },
         "model.SubmissionHistoryItem": {
             "category": "struct",

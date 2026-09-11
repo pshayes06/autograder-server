@@ -10,46 +10,45 @@ import (
 )
 
 func TestSet(test *testing.T) {
-	db.ResetForTesting()
 	defer db.ResetForTesting()
 
 	testCases := []struct {
-		email          string
-		active         bool
-		force          bool
-		locator        string
-		expectedSource model.StatusSource
+		email            string
+		force            bool
+		existingStatuses map[string]*model.CourseStatus
+		locator          string
+		expectedSource   model.StatusSource
 	}{
-		// Basic status sets
+		// Basic Set
 		{
-			"course-owner",
+			"course-admin",
 			false,
-			false,
+			map[string]*model.CourseStatus{},
 			"",
 			model.StatusSourceCourse,
 		},
 		{
-			"course-admin",
-			true,
+			"server-owner",
 			false,
+			map[string]*model.CourseStatus{},
 			"",
-			model.StatusSourceCourse,
+			model.StatusSourceServer,
 		},
 
-		// Trying to overwrite without force
+		// Overwrite Without Force
 		{
 			"course-admin",
 			false,
-			false,
+			map[string]*model.CourseStatus{"course-admin@test.edulinq.org": {}},
 			"-646",
 			0,
 		},
 
-		// Overwrite with force
+		// Overwrite With Force
 		{
 			"course-admin",
-			false,
 			true,
+			map[string]*model.CourseStatus{"course-admin@test.edulinq.org": {}},
 			"",
 			model.StatusSourceCourse,
 		},
@@ -58,16 +57,22 @@ func TestSet(test *testing.T) {
 		{
 			"course-grader",
 			false,
-			false,
+			map[string]*model.CourseStatus{},
 			"-020",
 			0,
 		},
 	}
 
 	for i, testCase := range testCases {
+		db.ResetForTesting()
+
+		course := db.MustGetCourse("course101")
+		course.Statuses = testCase.existingStatuses
+		db.MustSaveCourse(course)
+
 		fields := map[string]any{
 			"course-id": "course101",
-			"active":    testCase.active,
+			"active":    false,
 			"force":     testCase.force,
 		}
 
