@@ -39,7 +39,11 @@ func TestSet(test *testing.T) {
 		{
 			"course-admin",
 			false,
-			map[string]*model.CourseStatus{"course-admin@test.edulinq.org": {}},
+			map[string]*model.CourseStatus{
+				"course-admin@test.edulinq.org": {
+					Source: model.StatusSourceCourse,
+				},
+			},
 			"-646",
 			0,
 		},
@@ -48,7 +52,11 @@ func TestSet(test *testing.T) {
 		{
 			"course-admin",
 			true,
-			map[string]*model.CourseStatus{"course-admin@test.edulinq.org": {}},
+			map[string]*model.CourseStatus{
+				"course-admin@test.edulinq.org": {
+					Source: model.StatusSourceCourse,
+				},
+			},
 			"",
 			model.StatusSourceCourse,
 		},

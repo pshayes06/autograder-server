@@ -34,7 +34,7 @@ func HandleSet(request *SetRequest) (*SetResponse, *core.APIError) {
 	existingStatus, ok := request.Course.Statuses[owner]
 	if ok && !request.Force {
 		return nil, core.NewBadRequestError("-646", request,
-			fmt.Sprintf("Incoming status must be forced to overwrite existing (set at %s).",
+			fmt.Sprintf("Course active/inactive status already exists for this user (set at %s), use the force option to overwrite.",
 				existingStatus.SetTime.SafeString()))
 	}
 

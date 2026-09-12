@@ -78,7 +78,7 @@ func TestGetActiveStatus(test *testing.T) {
 			"server-admin@test.edulinq.org",
 		},
 
-		// Tie on StatusSource and SetTime (picks owner string that comes latest in lexicographical order).
+		// Tie on StatusSource and SetTime (picks owner string that comes last in lexicographical order).
 		{
 			map[string]*CourseStatus{
 				"server-owner@test.edulinq.org": {

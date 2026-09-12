@@ -14,7 +14,7 @@ type RemoveRequest struct {
 	// Email of status owner to remove. Defaults to the caller.
 	TargetOwner string `json:"target-owner"`
 
-	// If true, remove all statuses the caller has permission to remove.
+	// If true, ignores TargetOwner and removes all statuses the caller has permission to remove.
 	Clear bool `json:"clear"`
 
 	// Optional log message to include with status removal.
@@ -48,7 +48,8 @@ func HandleRemove(request *RemoveRequest) (*RemoveResponse, *core.APIError) {
 		targetStatus, ok := courseStatuses[target]
 		if ok {
 			if callerSource < targetStatus.Source {
-				return nil, core.NewPermissionsError("-648", request, targetStatus.Source, callerSource, "Cannot remove a status with a higher source.")
+				return nil, core.NewBadRequestError("-648", request,
+					"Cannot remove this course's active/inactive status because it was set by a higher privileged source.")
 			}
 
 			delete(courseStatuses, target)

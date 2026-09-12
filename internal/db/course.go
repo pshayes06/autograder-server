@@ -128,7 +128,7 @@ func upsertActiveCourseTasks(course *model.Course) error {
 		for i, task := range course.Tasks {
 			newTask, err := task.ToFullCourseTask(course.GetID())
 			if err != nil {
-				return fmt.Errorf("Unable to upsert task at inded %d: '%w'.", i, err)
+				return fmt.Errorf("Unable to upsert task at index %d: '%w'.", i, err)
 			}
 
 			if newTask == nil {

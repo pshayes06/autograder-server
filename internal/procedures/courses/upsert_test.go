@@ -343,7 +343,9 @@ func TestUpsertPreserveStatuses(test *testing.T) {
 	// Save the initial status.
 	course := db.MustGetCourse("course101")
 	course.Statuses = map[string]*model.CourseStatus{
-		"fake-user@test.edulinq.org": {},
+		"course-admin@test.edulinq.org": {
+			Source: model.StatusSourceCourse,
+		},
 	}
 	db.MustSaveCourse(course)
 
@@ -363,7 +365,7 @@ func TestUpsertPreserveStatuses(test *testing.T) {
 
 	// Verify the upsert preserved the statuses.
 	updatedCourse := db.MustGetCourse("course101")
-	_, ok := updatedCourse.Statuses["fake-user@test.edulinq.org"]
+	_, ok := updatedCourse.Statuses["course-admin@test.edulinq.org"]
 	if !ok {
 		test.Fatalf("Status did not survive the source reload.")
 	}

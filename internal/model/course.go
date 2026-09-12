@@ -122,7 +122,7 @@ func (this *Course) Validate() error {
 		}
 	}
 
-	// Creating an empty map for safe write operations.
+	// Create an empty map for safe write operations.
 	if this.Statuses == nil {
 		this.Statuses = make(map[string]*CourseStatus)
 	}
@@ -279,12 +279,12 @@ func (this *Course) GetActiveStatus() *CourseStatus {
 	return best
 }
 
-// Returns whether a course is active at a specific time, defaulting to true.
+// Returns whether a course is active at a specific time.
 // If there are no statuses, the date window is checked.
 func (this *Course) IsActive(time timestamp.Timestamp) bool {
-	highestStatus := this.GetActiveStatus()
-	if highestStatus != nil {
-		return highestStatus.Active
+	activeStatus := this.GetActiveStatus()
+	if activeStatus != nil {
+		return activeStatus.Active
 	}
 
 	if (this.StartDate != nil) && (time < *this.StartDate) {

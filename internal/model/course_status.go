@@ -23,7 +23,7 @@ const (
 	// For automated processes.
 	StatusSourceAutomated = 30
 
-	// For users with root privileges.
+	// For the root user.
 	StatusSourceRoot = 40
 )
 
@@ -48,7 +48,7 @@ var statusSourceToString = map[StatusSource]string{
 	StatusSourceRoot:      "root",
 }
 
-var stringToStatusSource = util.MapReverse(statusSourceToString)
+var stringToStatusSource map[string]StatusSource = util.MapReverse(statusSourceToString)
 
 func (this StatusSource) String() string {
 	return statusSourceToString[this]
@@ -67,13 +67,14 @@ func (this *StatusSource) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// Checks if a status has priority over another status, which is determined through the StatusSource hierarchy.
-// Ties are awarded to the most recent SetTime, and if those are equal, the unique owner string are compared lexicographically.
+// Checks if a status has priority over another status, determined by the one with a larger source value.
+// Statuses set later have priority over earlier ones, and if the time is equal, the unique owner strings are compared lexicographically.
 func (this *CourseStatus) compareTo(other *CourseStatus) int {
 	if this.Source != other.Source {
 		if this.Source > other.Source {
 			return 1
 		}
+
 		return -1
 	}
 

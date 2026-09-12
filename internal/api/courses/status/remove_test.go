@@ -21,7 +21,7 @@ func TestRemove(test *testing.T) {
 		locator          string
 		expectedOwners   []string
 	}{
-		// Basic Deletion
+		// Self Deletion
 		{
 			"course-owner",
 			"",
@@ -35,7 +35,7 @@ func TestRemove(test *testing.T) {
 			},
 		},
 
-		// Having nothing to delete.
+		// Nothing to delete.
 		{
 			"course-owner",
 			"",
@@ -82,7 +82,7 @@ func TestRemove(test *testing.T) {
 			},
 		},
 
-		// Clear when the caller has highest StatusSource.
+		// Clearing when the caller has highest StatusSource.
 		{
 			"server-admin",
 			"",

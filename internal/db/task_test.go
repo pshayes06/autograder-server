@@ -193,7 +193,7 @@ func (this *DBTests) DBTestToggleCourseActiveStatus(test *testing.T) {
 		When: &util.ScheduledTime{Daily: "00:00"},
 	}
 
-	// Starting with an active course that has a task.
+	// Start with an active course that has a task.
 	course := MustGetTestCourse()
 	course.Tasks = []*model.UserTaskInfo{testTask}
 	MustSaveCourse(course)
@@ -208,8 +208,6 @@ func (this *DBTests) DBTestToggleCourseActiveStatus(test *testing.T) {
 	}
 
 	// Set status to inactive, removing all active tasks for the course.
-	course = MustGetTestCourse()
-	course.Tasks = []*model.UserTaskInfo{testTask}
 	course.Statuses = map[string]*model.CourseStatus{
 		"fake-user@test.edulinq.org": {
 			Active: false,
@@ -227,8 +225,6 @@ func (this *DBTests) DBTestToggleCourseActiveStatus(test *testing.T) {
 	}
 
 	// Set status back to active, reactivating all course tasks.
-	course = MustGetTestCourse()
-	course.Tasks = []*model.UserTaskInfo{testTask}
 	course.Statuses = map[string]*model.CourseStatus{}
 	MustSaveCourse(course)
 
